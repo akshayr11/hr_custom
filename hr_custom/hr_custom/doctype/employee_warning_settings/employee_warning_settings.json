@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "creation": "2026-10-09 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "deduction_component",
+  "basic_component",
+  "per_day_basis"
+ ],
+ "fields": [
+  {
+   "fieldname": "deduction_component",
+   "fieldtype": "Link",
+   "label": "Deduction Salary Component",
+   "options": "Salary Component",
+   "reqd": 1,
+   "description": "Deduction component used for the Additional Salary created from an approved warning"
+  },
+  {
+   "fieldname": "basic_component",
+   "fieldtype": "Link",
+   "label": "Basic Salary Component",
+   "options": "Salary Component",
+   "reqd": 1,
+   "description": "Earning component whose amount in the employee's Salary Structure is the basic salary (e.g. Basic Salary)"
+  },
+  {
+   "fieldname": "per_day_basis",
+   "fieldtype": "Select",
+   "label": "Per Day Basic Based On",
+   "options": "Calendar Days of Month\nFixed 30 Days",
+   "default": "Calendar Days of Month",
+   "reqd": 1,
+   "description": "Per Day Basic = Basic Salary component / number of days in the month of the Effective Date (or 30)"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-09 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "Employee Warning Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
