@@ -1,0 +1,261 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-09 10:00:00.000000",
+ "default_print_format": "WPS Report",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_letter",
+  "company",
+  "letter_date",
+  "month",
+  "year",
+  "column_break_letter",
+  "bank",
+  "ot_type",
+  "emp_category",
+  "section_break_filters",
+  "based_on",
+  "head_office_selected",
+  "column_break_filters",
+  "cost_centers",
+  "departments",
+  "selected_employees",
+  "section_break_employees",
+  "employees",
+  "section_break_totals",
+  "total_employees",
+  "column_break_totals",
+  "total_ot_amount",
+  "total_amount",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_letter",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "remember_last_selected_value": 1
+  },
+  {
+   "fieldname": "letter_date",
+   "fieldtype": "Date",
+   "label": "Letter Date",
+   "reqd": 1,
+   "default": "Today",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "label": "Month",
+   "options": "\nJanuary\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Int",
+   "label": "Year",
+   "reqd": 1,
+   "non_negative": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_letter",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bank",
+   "fieldtype": "Link",
+   "label": "Bank",
+   "options": "Bank",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "ot_type",
+   "fieldtype": "Select",
+   "label": "OT Included",
+   "options": "With OT\nWithout OT\nOT Only",
+   "default": "With OT",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "bold": 1,
+   "description": "With OT: Net Pay incl. OT &bull; Without OT: Net Pay excluding OT &bull; OT Only: OT amount only"
+  },
+  {
+   "fieldname": "emp_category",
+   "fieldtype": "Link",
+   "label": "Emp Category",
+   "options": "Employment Type"
+  },
+  {
+   "fieldname": "section_break_filters",
+   "fieldtype": "Section Break",
+   "label": "Employee Selection"
+  },
+  {
+   "fieldname": "based_on",
+   "fieldtype": "Select",
+   "label": "Based On",
+   "options": "Cost Center\nDepartment\nEmployee",
+   "default": "Cost Center",
+   "reqd": 1
+  },
+  {
+   "fieldname": "head_office_selected",
+   "fieldtype": "Check",
+   "label": "Head Office Selected",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_filters",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cost_centers",
+   "fieldtype": "Table MultiSelect",
+   "label": "Cost Centers",
+   "options": "Bank Letter Cost Center",
+   "depends_on": "eval:doc.based_on=='Cost Center'",
+   "mandatory_depends_on": "eval:doc.based_on=='Cost Center'"
+  },
+  {
+   "fieldname": "departments",
+   "fieldtype": "Table MultiSelect",
+   "label": "Departments",
+   "options": "Bank Letter Department",
+   "depends_on": "eval:doc.based_on=='Department' || (doc.based_on=='Cost Center' && doc.head_office_selected)",
+   "mandatory_depends_on": "eval:doc.based_on=='Department'",
+   "description": "For Head Office cost center, leave empty to include all departments"
+  },
+  {
+   "fieldname": "selected_employees",
+   "fieldtype": "Table MultiSelect",
+   "label": "Employees",
+   "options": "Bank Letter Selected Employee",
+   "depends_on": "eval:doc.based_on=='Employee'",
+   "mandatory_depends_on": "eval:doc.based_on=='Employee'"
+  },
+  {
+   "fieldname": "section_break_employees",
+   "fieldtype": "Section Break",
+   "label": "Employees"
+  },
+  {
+   "fieldname": "employees",
+   "fieldtype": "Table",
+   "label": "Employee List",
+   "options": "Bank Letter Employee",
+   "reqd": 1,
+   "description": "Employees already included in another bank letter for the same month/year are excluded. Remove rows you do not want to pay in this letter."
+  },
+  {
+   "fieldname": "section_break_totals",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_employees",
+   "fieldtype": "Int",
+   "label": "Total Employees",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_ot_amount",
+   "fieldtype": "Currency",
+   "label": "Total OT Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Bank Letter",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-09 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "Bank Letter",
+ "naming_rule": "By script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "report": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1
+  }
+ ],
+ "show_title_field_in_link": 0,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "bank",
+ "track_changes": 1
+}
