@@ -86,7 +86,8 @@ app_license = "mit"
 # ------------
 
 # before_install = "hr_custom.install.before_install"
-# after_install = "hr_custom.install.after_install"
+after_install = "hr_custom.setup.after_install"
+after_migrate = "hr_custom.setup.after_migrate"
 
 # Uninstallation
 # ------------
