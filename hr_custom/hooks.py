@@ -153,6 +153,12 @@ after_migrate = "hr_custom.setup.after_migrate"
 # 	}
 # }
 
+doc_events = {
+	"Employee": {
+		"validate": "hr_custom.utils.set_employee_category",
+	},
+}
+
 # Scheduled Tasks
 # ---------------
 
