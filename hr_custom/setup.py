@@ -21,6 +21,34 @@ def make_custom_fields():
 					"description": "Bank Letter allows department wise selection for Head Office cost centers",
 				}
 			],
+			"Employee": [
+				{
+					"fieldname": "employee_category",
+					"fieldtype": "Select",
+					"label": "Employee Category",
+					"options": "\nOmani\nExpat",
+					"insert_after": "employment_type",
+					"in_standard_filter": 1,
+				}
+			],
+			"Payroll Entry": [
+				{
+					"fieldname": "employee_category",
+					"fieldtype": "Select",
+					"label": "Employee Category",
+					"options": "All\nOmani\nExpat",
+					"default": "All",
+					"insert_after": "grade",
+				},
+				{
+					"fieldname": "payroll_cost_center",
+					"fieldtype": "Link",
+					"label": "Payroll Cost Center",
+					"options": "Cost Center",
+					"insert_after": "employee_category",
+					"description": "Only employees whose Payroll Cost Center is this (or a child of it)",
+				},
+			],
 			"Salary Component": [
 				{
 					"fieldname": "is_overtime_component",
