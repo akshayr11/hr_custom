@@ -5,6 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname
+from frappe.query_builder.functions import Coalesce, NullIf
 from frappe.utils import flt, get_last_day, getdate
 
 MONTHS = [
@@ -140,11 +141,14 @@ class BankLetter(Document):
 		start, end = self.get_period()
 		ss = frappe.qb.DocType("Salary Slip")
 		emp = frappe.qb.DocType("Employee")
+		dept = frappe.qb.DocType("Department")
 
 		query = (
 			frappe.qb.from_(ss)
 			.join(emp)
 			.on(ss.employee == emp.name)
+			.left_join(dept)
+			.on(emp.department == dept.name)
 			.select(
 				ss.name.as_("salary_slip"),
 				ss.employee,
@@ -152,7 +156,8 @@ class BankLetter(Document):
 				ss.gross_pay,
 				ss.net_pay,
 				ss.payment_days,
-				emp.payroll_cost_center.as_("cost_center"),
+				# employee's payroll cost center, else the department's (same fallback as HRMS payroll)
+				Coalesce(NullIf(emp.payroll_cost_center, ""), dept.payroll_cost_center).as_("cost_center"),
 				emp.department,
 				emp.bank_name,
 				emp.bank_ac_no,

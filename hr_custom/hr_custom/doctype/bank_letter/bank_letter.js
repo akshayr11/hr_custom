@@ -20,14 +20,15 @@ const OT_TYPE_COLORS = { "With OT": "green", "Without OT": "orange", "OT Only": 
 
 frappe.ui.form.on("Bank Letter", {
 	setup(frm) {
-		frm.set_query("cost_center", "cost_centers", () => ({
+		// Table MultiSelect fields take the query on the field itself, not via a grid
+		frm.set_query("cost_centers", () => ({
 			filters: { company: frm.doc.company },
 		}));
-		frm.set_query("department", "departments", () => ({
+		frm.set_query("departments", () => ({
 			filters: { company: frm.doc.company },
 		}));
-		frm.set_query("employee", "selected_employees", () => ({
-			filters: { company: frm.doc.company, status: "Active" },
+		frm.set_query("selected_employees", () => ({
+			filters: { company: frm.doc.company },
 		}));
 	},
 
