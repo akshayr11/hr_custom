@@ -186,6 +186,9 @@ after_migrate = "hr_custom.setup.after_migrate"
 # extend_doctype_class = {
 # 	"Task": "hr_custom.custom.task.CustomTaskMixin"
 # }
+extend_doctype_class = {
+	"Payroll Entry": "hr_custom.overrides.payroll_entry.PayrollEntryMixin",
+}
 
 # Overriding Methods
 # ------------------------------

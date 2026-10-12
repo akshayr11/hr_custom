@@ -97,9 +97,12 @@
   },
   {
    "fieldname": "emp_category",
-   "fieldtype": "Link",
-   "label": "Emp Category",
-   "options": "Employment Type"
+   "fieldtype": "Select",
+   "label": "Employee Category",
+   "options": "All\nOmani\nExpat",
+   "default": "All",
+   "reqd": 1,
+   "in_standard_filter": 1
   },
   {
    "fieldname": "section_break_filters",
@@ -132,7 +135,7 @@
    "options": "Bank Letter Cost Center",
    "depends_on": "eval:doc.based_on=='Cost Center'",
    "mandatory_depends_on": "eval:doc.based_on=='Cost Center'",
-   "description": "Matched against each employee's Payroll Cost Center (or their department's, if not set on the employee)"
+   "description": "Matched against the Payroll Cost Center of the month's Payroll Entry (or the employee's Payroll Cost Center if the entry has none)"
   },
   {
    "fieldname": "departments",
@@ -140,8 +143,8 @@
    "label": "Departments",
    "options": "Bank Letter Department",
    "depends_on": "eval:doc.based_on=='Department' || (doc.based_on=='Cost Center' && doc.head_office_selected)",
-   "mandatory_depends_on": "eval:doc.based_on=='Department'",
-   "description": "For Head Office cost center, leave empty to include all departments"
+   "mandatory_depends_on": "eval:doc.based_on=='Department' || (doc.based_on=='Cost Center' && doc.head_office_selected)",
+   "description": "Mandatory when a Head Office cost center is selected"
   },
   {
    "fieldname": "selected_employees",
@@ -206,7 +209,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-12 10:00:00.000000",
+ "modified": "2026-10-12 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Custom",
  "name": "Bank Letter",

@@ -8,6 +8,8 @@ from frappe.model.naming import make_autoname
 from frappe.query_builder.functions import Coalesce, NullIf
 from frappe.utils import flt, get_last_day, getdate
 
+from hr_custom.utils import EMPLOYEE_CATEGORIES, employee_payroll_cost_center
+
 MONTHS = [
 	"January",
 	"February",
@@ -40,6 +42,7 @@ class BankLetter(Document):
 
 	def validate(self):
 		self.set_head_office_selected()
+		self.validate_head_office_departments()
 		self.validate_duplicate_employees()
 		self.validate_already_included()
 		self.set_totals()
@@ -60,6 +63,10 @@ class BankLetter(Document):
 		self.head_office_selected = int(any(d.cost_center in head_office for d in self.cost_centers))
 		if self.based_on == "Cost Center" and not self.head_office_selected:
 			self.departments = []
+
+	def validate_head_office_departments(self):
+		if self.based_on == "Cost Center" and self.head_office_selected and not self.departments:
+			frappe.throw(_("Please select Departments for the Head Office cost center"))
 
 	def validate_duplicate_employees(self):
 		seen = set()
@@ -91,6 +98,7 @@ class BankLetter(Document):
 				frappe.throw(_("Please set {0}").format(self.meta.get_label(field)))
 
 		self.set_head_office_selected()
+		self.validate_head_office_departments()
 		self.employees = []
 
 		included = get_included_employees(self.company, self.month, self.year, self.ot_type, self.name)
@@ -142,6 +150,7 @@ class BankLetter(Document):
 		ss = frappe.qb.DocType("Salary Slip")
 		emp = frappe.qb.DocType("Employee")
 		dept = frappe.qb.DocType("Department")
+		pe = frappe.qb.DocType("Payroll Entry")
 
 		query = (
 			frappe.qb.from_(ss)
@@ -149,6 +158,8 @@ class BankLetter(Document):
 			.on(ss.employee == emp.name)
 			.left_join(dept)
 			.on(emp.department == dept.name)
+			.left_join(pe)
+			.on(ss.payroll_entry == pe.name)
 			.select(
 				ss.name.as_("salary_slip"),
 				ss.employee,
@@ -156,8 +167,11 @@ class BankLetter(Document):
 				ss.gross_pay,
 				ss.net_pay,
 				ss.payment_days,
-				# employee's payroll cost center, else the department's (same fallback as HRMS payroll)
-				Coalesce(NullIf(emp.payroll_cost_center, ""), dept.payroll_cost_center).as_("cost_center"),
+				# Payroll Cost Center of the month's Payroll Entry; when that entry was run for all
+				# cost centers (or the slip has no entry), the employee's payroll cost center
+				Coalesce(NullIf(pe.payroll_cost_center, ""), employee_payroll_cost_center(emp, dept)).as_(
+					"cost_center"
+				),
 				emp.department,
 				emp.bank_name,
 				emp.bank_ac_no,
@@ -173,8 +187,8 @@ class BankLetter(Document):
 			.orderby(ss.employee_name)
 		)
 
-		if self.emp_category:
-			query = query.where(emp.employment_type == self.emp_category)
+		if self.emp_category in EMPLOYEE_CATEGORIES:
+			query = query.where(emp.employee_category == self.emp_category)
 
 		if self.based_on == "Employee":
 			employees = [d.employee for d in self.selected_employees]
