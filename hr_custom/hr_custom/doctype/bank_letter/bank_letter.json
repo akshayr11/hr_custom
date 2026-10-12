@@ -131,7 +131,8 @@
    "label": "Cost Centers",
    "options": "Bank Letter Cost Center",
    "depends_on": "eval:doc.based_on=='Cost Center'",
-   "mandatory_depends_on": "eval:doc.based_on=='Cost Center'"
+   "mandatory_depends_on": "eval:doc.based_on=='Cost Center'",
+   "description": "Matched against each employee's Payroll Cost Center (or their department's, if not set on the employee)"
   },
   {
    "fieldname": "departments",
@@ -205,7 +206,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-09 10:00:00.000000",
+ "modified": "2026-10-12 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Custom",
  "name": "Bank Letter",
