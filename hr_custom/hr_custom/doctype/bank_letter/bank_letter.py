@@ -59,14 +59,31 @@ class BankLetter(Document):
 		return start, get_last_day(start)
 
 	def set_head_office_selected(self):
-		head_office = set(get_head_office_cost_centers())
-		self.head_office_selected = int(any(d.cost_center in head_office for d in self.cost_centers))
-		if self.based_on == "Cost Center" and not self.head_office_selected:
+		if self.all_cost_centers:
+			self.cost_centers = []
+		if self.all_departments:
 			self.departments = []
 
+		head_office = set(get_head_office_cost_centers(self.company))
+		if self.based_on == "Cost Center" and self.all_cost_centers:
+			self.head_office_selected = int(bool(head_office))
+		else:
+			self.head_office_selected = int(any(d.cost_center in head_office for d in self.cost_centers))
+
+		if self.based_on == "Cost Center" and not self.head_office_selected:
+			self.departments = []
+			self.all_departments = 0
+
 	def validate_head_office_departments(self):
-		if self.based_on == "Cost Center" and self.head_office_selected and not self.departments:
-			frappe.throw(_("Please select Departments for the Head Office cost center"))
+		if (
+			self.based_on == "Cost Center"
+			and self.head_office_selected
+			and not self.departments
+			and not self.all_departments
+		):
+			frappe.throw(
+				_("Please select Departments for the Head Office cost center, or tick All Departments")
+			)
 
 	def validate_duplicate_employees(self):
 		seen = set()
@@ -101,8 +118,7 @@ class BankLetter(Document):
 		self.validate_head_office_departments()
 		self.employees = []
 
-		included = get_included_employees(self.company, self.month, self.year, self.ot_type, self.name)
-		slips = [d for d in self.get_salary_slips() if d.employee not in included]
+		slips, reason = self.get_filtered_salary_slips()
 		ot_amounts = get_ot_amounts([d.salary_slip for d in slips])
 
 		rows = {}
@@ -142,10 +158,140 @@ class BankLetter(Document):
 			if flt(row.amount) > 0:
 				self.append("employees", row)
 
+		if rows and not self.employees:
+			reason = _("{0} employee(s) matched, but their amount to transfer is 0 for {1}.").format(
+				len(rows), frappe.bold(_(self.ot_type))
+			)
+			if self.ot_type == "OT Only":
+				reason += " " + _(
+					"No OT earnings found. Mark OT salary components with 'Is Overtime (OT) Component'."
+				)
+
 		self.set_totals()
-		return len(self.employees)
+		return {"count": len(self.employees), "reason": reason}
+
+	def get_filtered_salary_slips(self):
+		"""Apply the letter's filters one by one. Returns (slips, reason) where reason explains which
+		filter left no employees."""
+		slips = self.get_salary_slips()
+		if not slips:
+			return [], _(
+				"No submitted Salary Slips found for {0} with start date in {1} {2}. Submit the Payroll Entry's salary slips first."
+			).format(frappe.bold(self.company), frappe.bold(_(self.month)), self.year)
+
+		filters = [
+			(
+				lambda d: normalize(d.bank_name) == normalize(self.bank),
+				lambda found: _("None of them have Bank Name {0} on the Employee master.").format(
+					frappe.bold(self.bank)
+				)
+				+ summarize(_("Bank Name on these employees"), found, "bank_name"),
+			)
+		]
+
+		if self.emp_category in EMPLOYEE_CATEGORIES:
+			if not has_employee_category():
+				frappe.throw(_("Employee Category field is missing on Employee. Please run bench migrate."))
+			filters.append(
+				(
+					lambda d: d.employee_category == self.emp_category,
+					lambda found: _("None of them have Employee Category {0} (set from Nationality).").format(
+						frappe.bold(self.emp_category)
+					)
+					+ summarize(_("Employee Category"), found, "employee_category"),
+				)
+			)
+
+		filters.append(self.get_selection_filter())
+
+		included = get_included_employees(self.company, self.month, self.year, self.ot_type, self.name)
+		filters.append(
+			(
+				lambda d: d.employee not in included,
+				lambda found: _("All of them are already included in another Bank Letter for {0} {1}: {2}").format(
+					_(self.month), self.year, ", ".join(sorted({included[d.employee][0] for d in found}))
+				),
+			)
+		)
+
+		total = len({d.employee for d in slips})
+		for keep, explain in filters:
+			remaining = [d for d in slips if keep(d)]
+			if not remaining:
+				intro = _("{0} employee(s) have submitted Salary Slips for {1} {2}.").format(
+					total, _(self.month), self.year
+				)
+				checked = len({d.employee for d in slips})
+				if checked < total:
+					intro += " " + _("{0} of them passed the earlier filters.").format(checked)
+				return [], intro + "<br><br>" + explain(slips)
+			slips = remaining
+
+		return slips, None
+
+	def get_selection_filter(self):
+		"""(keep, explain) for the Based On selection: Employee / Department / Cost Center."""
+		if self.based_on == "Employee":
+			employees = {d.employee for d in self.selected_employees}
+			if not employees:
+				frappe.throw(_("Please select Employees"))
+			return (
+				lambda d: d.employee in employees,
+				lambda found: _("None of the selected employees have a submitted Salary Slip with this Bank."),
+			)
+
+		if self.based_on == "Department":
+			if self.all_departments:
+				return (lambda d: True, lambda found: "")
+
+			departments = set(expand_tree("Department", [d.department for d in self.departments]))
+			if not departments:
+				frappe.throw(_("Please select Departments or tick All Departments"))
+			return (
+				lambda d: d.department in departments,
+				lambda found: _("None of them are in the selected Departments.")
+				+ summarize(_("Departments of these employees"), found, "department"),
+			)
+
+		if not self.cost_centers and not self.all_cost_centers:
+			frappe.throw(_("Please select Cost Centers or tick All Cost Centers"))
+
+		head_office = set(get_head_office_cost_centers(self.company))
+		departments = set(expand_tree("Department", [d.department for d in self.departments]))
+
+		def department_ok(slip):
+			return self.all_departments or not departments or slip.department in departments
+
+		if self.all_cost_centers:
+			# everyone, including employees without a cost center; Head Office still by department
+			head_office_ccs = set(expand_tree("Cost Center", head_office))
+
+			def keep(slip):
+				return department_ok(slip) if slip.cost_center in head_office_ccs else True
+
+		else:
+			selected = {d.cost_center for d in self.cost_centers}
+			head_office_ccs = set(expand_tree("Cost Center", selected & head_office))
+			other_ccs = set(expand_tree("Cost Center", selected - head_office))
+
+			def keep(slip):
+				if slip.cost_center in other_ccs:
+					return True
+				if slip.cost_center in head_office_ccs:
+					return department_ok(slip)
+				return False
+
+		return (
+			keep,
+			lambda found: _(
+				"None of them are in the selected Cost Centers. The cost center comes from the Payroll Entry's Payroll Cost Center, else the Employee's (or their Department's) Payroll Cost Center."
+			)
+			+ summarize(_("Payroll Cost Center of these employees"), found, "cost_center"),
+		)
 
 	def get_salary_slips(self):
+		"""All submitted salary slips of the company for the month, with the employee details used
+		by the filters."""
 		start, end = self.get_period()
 		ss = frappe.qb.DocType("Salary Slip")
 		emp = frappe.qb.DocType("Employee")
@@ -182,53 +328,35 @@ class BankLetter(Document):
 				& (ss.company == self.company)
 				& (ss.start_date >= start)
 				& (ss.start_date <= end)
-				& (emp.bank_name == self.bank)
 			)
 			.orderby(ss.employee_name)
 		)
+		if has_employee_category():
+			query = query.select(emp.employee_category)
 
-		if self.emp_category in EMPLOYEE_CATEGORIES:
-			if not has_employee_category():
-				frappe.throw(_("Employee Category field is missing on Employee. Please run bench migrate."))
-			query = query.where(emp.employee_category == self.emp_category)
+		return query.run(as_dict=True)
 
-		if self.based_on == "Employee":
-			employees = [d.employee for d in self.selected_employees]
-			if not employees:
-				frappe.throw(_("Please select Employees"))
-			query = query.where(ss.employee.isin(employees))
 
-		elif self.based_on == "Department":
-			departments = expand_tree("Department", [d.department for d in self.departments])
-			if not departments:
-				frappe.throw(_("Please select Departments"))
-			query = query.where(emp.department.isin(departments))
+def normalize(value):
+	return (value or "").strip().lower()
 
-		slips = query.run(as_dict=True)
 
-		if self.based_on == "Cost Center":
-			slips = self.filter_by_cost_center(slips)
+def summarize(label, slips, field, limit=8):
+	"""'<br>Label: A (3), Not set (2)' for the values of `field` across the slips' employees."""
+	from collections import Counter
 
-		return slips
+	counts = Counter()
+	seen = set()
+	for d in slips:
+		if d.employee in seen:
+			continue
+		seen.add(d.employee)
+		counts[d.get(field) or _("Not set")] += 1
 
-	def filter_by_cost_center(self, slips):
-		if not self.cost_centers:
-			frappe.throw(_("Please select Cost Centers"))
-
-		head_office = set(get_head_office_cost_centers())
-		selected = {d.cost_center for d in self.cost_centers}
-		head_office_ccs = set(expand_tree("Cost Center", selected & head_office))
-		other_ccs = set(expand_tree("Cost Center", selected - head_office))
-		departments = set(expand_tree("Department", [d.department for d in self.departments]))
-
-		def include(slip):
-			if slip.cost_center in other_ccs:
-				return True
-			if slip.cost_center in head_office_ccs:
-				return not departments or slip.department in departments
-			return False
-
-		return [d for d in slips if include(d)]
+	values = ", ".join(
+		f"{frappe.utils.escape_html(str(value))} ({count})" for value, count in counts.most_common(limit)
+	)
+	return f"<br>{label}: {values}"
 
 
 def expand_tree(doctype, names):
@@ -242,8 +370,11 @@ def expand_tree(doctype, names):
 	return list(result)
 
 
-def get_head_office_cost_centers():
-	return frappe.get_all("Cost Center", filters={"is_head_office": 1}, pluck="name")
+def get_head_office_cost_centers(company=None):
+	filters = {"is_head_office": 1}
+	if company:
+		filters["company"] = company
+	return frappe.get_all("Cost Center", filters=filters, pluck="name")
 
 
 def get_ot_components():
