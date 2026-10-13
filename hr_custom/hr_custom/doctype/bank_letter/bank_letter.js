@@ -88,12 +88,12 @@ frappe.ui.form.on("Bank Letter", {
 			callback(r) {
 				frm.refresh_fields();
 				frm.dirty();
-				if (!r.exc && !r.message) {
-					frappe.msgprint(
-						__(
-							"No employees found. Either there are no submitted salary slips matching the filters, or the employees are already included in another Bank Letter for this month."
-						)
-					);
+				if (!r.exc && r.message && !r.message.count) {
+					frappe.msgprint({
+						title: __("No employees found"),
+						indicator: "orange",
+						message: r.message.reason || __("No employees match the filters."),
+					});
 				}
 			},
 		});
@@ -112,30 +112,39 @@ frappe.ui.form.on("Bank Letter", {
 	},
 
 	based_on(frm) {
-		frm.set_value("cost_centers", []);
-		frm.set_value("departments", []);
-		frm.set_value("selected_employees", []);
-		frm.set_value("head_office_selected", 0);
+		frm.set_value({
+			cost_centers: [],
+			departments: [],
+			selected_employees: [],
+			all_cost_centers: 0,
+			all_departments: 0,
+			head_office_selected: 0,
+		});
 	},
 
+	all_cost_centers(frm) {
+		if (frm.doc.all_cost_centers) frm.set_value("cost_centers", []);
+		frm.trigger("cost_centers");
+	},
+
+	all_departments(frm) {
+		if (frm.doc.all_departments) frm.set_value("departments", []);
+	},
+
+	// Departments are needed when a Head Office cost center is part of the selection
 	cost_centers(frm) {
 		const cost_centers = (frm.doc.cost_centers || []).map((d) => d.cost_center).filter(Boolean);
-		if (!cost_centers.length) {
-			frm.set_value("head_office_selected", 0);
-			frm.set_value("departments", []);
+		if (!frm.doc.all_cost_centers && !cost_centers.length) {
+			set_head_office_selected(frm, 0);
 			return;
 		}
 
+		const filters = { is_head_office: 1, company: frm.doc.company };
+		if (!frm.doc.all_cost_centers) filters.name = ["in", cost_centers];
+
 		frappe.db
-			.get_list("Cost Center", {
-				filters: { name: ["in", cost_centers], is_head_office: 1 },
-				limit: 1,
-			})
-			.then((rows) => {
-				const is_head_office = rows.length ? 1 : 0;
-				frm.set_value("head_office_selected", is_head_office);
-				if (!is_head_office) frm.set_value("departments", []);
-			});
+			.get_list("Cost Center", { filters, limit: 1 })
+			.then((rows) => set_head_office_selected(frm, rows.length ? 1 : 0));
 	},
 
 	// Show letters already made for the month so the user knows whether OT was paid
@@ -180,3 +189,8 @@ frappe.ui.form.on("Bank Letter", {
 	},
 });
 
+
+function set_head_office_selected(frm, value) {
+	frm.set_value("head_office_selected", value);
+	if (!value) frm.set_value({ departments: [], all_departments: 0 });
+}
