@@ -195,3 +195,55 @@ def make_property_setters():
 		make_property_setter(
 			"Payroll Employee Detail", fieldname, prop, value, property_type, validate_fields_for_doctype=False
 		)
+
+
+def diagnose():
+	"""`bench --site <site> execute hr_custom.setup.diagnose` - shows what is missing for the
+	Employee Category / Job Category / Payroll Cost Center features."""
+	from hr_custom.utils import get_nationality_field
+
+	expected = {
+		"Employee": ["employee_category"],
+		"Payroll Entry": ["employee_category", "payroll_cost_center", "job_category"],
+		"Payroll Employee Detail": ["employee_category", "payroll_cost_center", "job_category"],
+		"Cost Center": ["is_head_office"],
+	}
+	report = {"missing_fields": {}}
+	for doctype, fields in expected.items():
+		meta = frappe.get_meta(doctype)
+		missing = [f for f in fields if not meta.has_field(f)]
+		if missing:
+			report["missing_fields"][doctype] = missing
+
+	report["nationality_field"] = get_nationality_field()
+	report["employee_has_job_category"] = frappe.get_meta("Employee").has_field("job_category")
+	report["payroll_entry_extension_loaded"] = "PayrollEntryMixin" in [
+		c.__name__ for c in frappe.get_doc({"doctype": "Payroll Entry"}).__class__.__mro__
+	]
+
+	active = {"status": "Active"}
+	report["active_employees"] = frappe.db.count("Employee", active)
+	if report["nationality_field"]:
+		report["active_without_nationality"] = frappe.db.count(
+			"Employee", {**active, report["nationality_field"]: ("is", "not set")}
+		)
+	if frappe.get_meta("Employee").has_field("employee_category"):
+		report["active_without_category"] = frappe.db.count(
+			"Employee", {**active, "employee_category": ("is", "not set")}
+		)
+
+	emp = frappe.qb.DocType("Employee")
+	dept = frappe.qb.DocType("Department")
+	from hr_custom.utils import employee_payroll_cost_center
+
+	no_cc = (
+		frappe.qb.from_(emp)
+		.left_join(dept)
+		.on(emp.department == dept.name)
+		.select(emp.name, emp.employee_name)
+		.where((emp.status == "Active") & employee_payroll_cost_center(emp, dept).isnull())
+	).run()
+	report["active_without_payroll_cost_center"] = [f"{d[0]} {d[1]}" for d in no_cc]
+
+	for key, value in report.items():
+		print(f"{key}: {value}")
