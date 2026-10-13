@@ -8,7 +8,7 @@ from frappe.model.naming import make_autoname
 from frappe.query_builder.functions import Coalesce, NullIf
 from frappe.utils import flt, get_last_day, getdate
 
-from hr_custom.utils import EMPLOYEE_CATEGORIES, employee_payroll_cost_center
+from hr_custom.utils import EMPLOYEE_CATEGORIES, employee_payroll_cost_center, has_employee_category
 
 MONTHS = [
 	"January",
@@ -188,6 +188,8 @@ class BankLetter(Document):
 		)
 
 		if self.emp_category in EMPLOYEE_CATEGORIES:
+			if not has_employee_category():
+				frappe.throw(_("Employee Category field is missing on Employee. Please run bench migrate."))
 			query = query.where(emp.employee_category == self.emp_category)
 
 		if self.based_on == "Employee":

@@ -57,12 +57,15 @@ class PayrollEntryMixin:
 	def set_employee_payroll_details(self):
 		"""Show each employee's category, job category and payroll cost center in Employee Details."""
 		details = get_employee_payroll_details([d.employee for d in self.employees])
+		fields = [
+			f
+			for f in ("employee_category", "job_category", "payroll_cost_center")
+			if self.employees and self.employees[0].meta.has_field(f)
+		]
 		for row in self.employees:
 			d = details.get(row.employee) or {}
-			row.employee_category = d.get("employee_category")
-			row.payroll_cost_center = d.get("payroll_cost_center")
-			if row.meta.has_field("job_category"):
-				row.job_category = d.get("job_category")
+			for f in fields:
+				row.set(f, d.get(f))
 
 	def validate_employee_filters(self):
 		"""Catch rows added manually that don't match the filters."""
