@@ -19,6 +19,11 @@ def has_job_category():
 	return frappe.get_meta("Employee").has_field("job_category")
 
 
+def has_employee_category():
+	# created by `bench migrate` (hr_custom.setup); guard so payroll still works before that
+	return frappe.get_meta("Employee").has_field("employee_category")
+
+
 def get_employee_category(nationality):
 	if not nationality:
 		return None
@@ -54,7 +59,7 @@ def get_matching_employees(employees, employee_category=None, payroll_cost_cente
 		.where(emp.name.isin(list(employees)))
 	)
 
-	if employee_category in EMPLOYEE_CATEGORIES:
+	if employee_category in EMPLOYEE_CATEGORIES and has_employee_category():
 		query = query.where(emp.employee_category == employee_category)
 
 	if job_category and has_job_category():
@@ -79,13 +84,11 @@ def get_employee_payroll_details(employees):
 		frappe.qb.from_(emp)
 		.left_join(dept)
 		.on(emp.department == dept.name)
-		.select(
-			emp.name,
-			emp.employee_category,
-			employee_payroll_cost_center(emp, dept).as_("payroll_cost_center"),
-		)
+		.select(emp.name, employee_payroll_cost_center(emp, dept).as_("payroll_cost_center"))
 		.where(emp.name.isin(list(employees)))
 	)
+	if has_employee_category():
+		query = query.select(emp.employee_category)
 	if has_job_category():
 		query = query.select(emp.job_category)
 
