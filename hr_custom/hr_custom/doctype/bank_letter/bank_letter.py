@@ -59,13 +59,13 @@ class BankLetter(Document):
 		return start, get_last_day(start)
 
 	def set_head_office_selected(self):
-		if self.all_cost_centers:
+		if self.get("all_cost_centers"):
 			self.cost_centers = []
-		if self.all_departments:
+		if self.get("all_departments"):
 			self.departments = []
 
 		head_office = set(get_head_office_cost_centers(self.company))
-		if self.based_on == "Cost Center" and self.all_cost_centers:
+		if self.based_on == "Cost Center" and self.get("all_cost_centers"):
 			self.head_office_selected = int(bool(head_office))
 		else:
 			self.head_office_selected = int(any(d.cost_center in head_office for d in self.cost_centers))
@@ -79,7 +79,7 @@ class BankLetter(Document):
 			self.based_on == "Cost Center"
 			and self.head_office_selected
 			and not self.departments
-			and not self.all_departments
+			and not self.get("all_departments")
 		):
 			frappe.throw(
 				_("Please select Departments for the Head Office cost center, or tick All Departments")
@@ -241,7 +241,7 @@ class BankLetter(Document):
 			)
 
 		if self.based_on == "Department":
-			if self.all_departments:
+			if self.get("all_departments"):
 				return (lambda d: True, lambda found: "")
 
 			departments = set(expand_tree("Department", [d.department for d in self.departments]))
@@ -253,16 +253,16 @@ class BankLetter(Document):
 				+ summarize(_("Departments of these employees"), found, "department"),
 			)
 
-		if not self.cost_centers and not self.all_cost_centers:
+		if not self.cost_centers and not self.get("all_cost_centers"):
 			frappe.throw(_("Please select Cost Centers or tick All Cost Centers"))
 
 		head_office = set(get_head_office_cost_centers(self.company))
 		departments = set(expand_tree("Department", [d.department for d in self.departments]))
 
 		def department_ok(slip):
-			return self.all_departments or not departments or slip.department in departments
+			return self.get("all_departments") or not departments or slip.department in departments
 
-		if self.all_cost_centers:
+		if self.get("all_cost_centers"):
 			# everyone, including employees without a cost center; Head Office still by department
 			head_office_ccs = set(expand_tree("Cost Center", head_office))
 
