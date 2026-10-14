@@ -44,6 +44,7 @@ app_license = "mit"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Service Request": "public/js/service_request.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -157,6 +158,9 @@ after_migrate = "hr_custom.setup.after_migrate"
 doc_events = {
 	"Employee": {
 		"validate": "hr_custom.utils.set_employee_category",
+	},
+	"Service Request": {
+		"validate": "hr_custom.overrides.service_request.validate",
 	},
 }
 

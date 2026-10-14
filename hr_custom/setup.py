@@ -162,6 +162,7 @@ def make_custom_fields():
 	)
 	make_job_category_fields()
 	make_property_setters()
+	make_service_request_fields()
 	update_employee_categories()
 
 
@@ -186,6 +187,12 @@ def make_nationality_field():
 			]
 		}
 	)
+
+
+def make_service_request_fields():
+	from hr_custom.overrides.service_request import make_fields
+
+	make_fields()
 
 
 def make_job_category_fields():
