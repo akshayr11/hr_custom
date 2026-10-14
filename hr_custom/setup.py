@@ -3,12 +3,79 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 
 
+ROLES = ("IT Admin",)
+
+
+def before_install():
+	make_roles()
+
+
+def before_migrate():
+	# roles must exist before doctypes that grant them permissions are synced
+	make_roles()
+
+
 def after_install():
 	make_custom_fields()
+	make_it_masters()
 
 
 def after_migrate():
 	make_custom_fields()
+	make_it_masters()
+
+
+# default entries for the IT Service Request masters; only added when missing, so edits are kept
+IT_MASTERS = {
+	"IT Request Type": (
+		"request_type",
+		[
+			{"request_type": "Network"},
+			{"request_type": "Hardware", "requires_system_details": 1},
+			{"request_type": "ERP", "requires_erp_module": 1},
+			{"request_type": "Other IT Services"},
+		],
+	),
+	"IT Computer Type": (
+		"computer_type",
+		[
+			{"computer_type": t}
+			for t in ("Computer", "Laptop", "Monitor", "Desktop PC", "Scanner", "Printer", "LED TV")
+		],
+	),
+	"ERP Module": (
+		"erp_module",
+		[
+			{"erp_module": m}
+			for m in (
+				"HR",
+				"Payroll",
+				"Accounts",
+				"Buying",
+				"Selling",
+				"Stock",
+				"Projects",
+				"Assets",
+				"Manufacturing",
+				"CRM",
+				"Other",
+			)
+		],
+	),
+}
+
+
+def make_it_masters():
+	for doctype, (key, records) in IT_MASTERS.items():
+		for record in records:
+			if not frappe.db.exists(doctype, record[key]):
+				frappe.get_doc({"doctype": doctype, **record}).insert(ignore_permissions=True)
+
+
+def make_roles():
+	for role in ROLES:
+		if not frappe.db.exists("Role", role):
+			frappe.get_doc({"doctype": "Role", "role_name": role, "desk_access": 1}).insert(ignore_permissions=True)
 
 
 def make_custom_fields():
