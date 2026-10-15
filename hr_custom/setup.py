@@ -163,6 +163,8 @@ def make_custom_fields():
 	make_job_category_fields()
 	make_property_setters()
 	make_service_request_fields()
+	make_airfare_component()
+	make_workflow_user_fields()
 	update_employee_categories()
 
 
@@ -187,6 +189,18 @@ def make_nationality_field():
 			]
 		}
 	)
+
+
+def make_workflow_user_fields():
+	from hr_custom.overrides.workflow_users import make_fields
+
+	make_fields()
+
+
+def make_airfare_component():
+	from hr_custom.overrides.salary_structure_assignment import make_airfare_component
+
+	make_airfare_component()
 
 
 def make_service_request_fields():
