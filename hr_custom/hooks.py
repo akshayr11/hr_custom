@@ -162,6 +162,11 @@ doc_events = {
 	"Service Request": {
 		"validate": "hr_custom.overrides.service_request.validate",
 	},
+	# transport documents: save who performed each workflow step
+	**{
+		doctype: {"validate": "hr_custom.overrides.workflow_users.set_workflow_users"}
+		for doctype in ("Fleet Hiring Request", "Hiring Contract", "Equipment Timesheet", "Hiring Receipt")
+	},
 }
 
 # Scheduled Tasks
@@ -199,6 +204,7 @@ doc_events = {
 # }
 extend_doctype_class = {
 	"Payroll Entry": "hr_custom.overrides.payroll_entry.PayrollEntryMixin",
+	"Salary Structure Assignment": "hr_custom.overrides.salary_structure_assignment.SalaryStructureAssignmentMixin",
 }
 
 # Overriding Methods

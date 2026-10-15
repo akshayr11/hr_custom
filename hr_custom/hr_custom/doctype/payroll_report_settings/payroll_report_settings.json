@@ -1,0 +1,48 @@
+{
+ "actions": [],
+ "creation": "2026-10-15 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "components"
+ ],
+ "fields": [
+  {
+   "fieldname": "components",
+   "fieldtype": "Table",
+   "options": "Payroll Report Component",
+   "label": "Component Mapping",
+   "description": "Which report column each salary component goes to in 'Payroll Additions and Deductions'. Components not listed are mapped automatically by their name (e.g. PASI, Social Security, Airfare, Overtime, Leave Encashment, Arrear, Claim)."
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-15 11:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "Payroll Report Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

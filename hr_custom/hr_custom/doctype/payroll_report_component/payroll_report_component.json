@@ -1,0 +1,42 @@
+{
+ "actions": [],
+ "creation": "2026-10-15 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "salary_component",
+  "report_column"
+ ],
+ "fields": [
+  {
+   "fieldname": "salary_component",
+   "fieldtype": "Link",
+   "options": "Salary Component",
+   "label": "Salary Component",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 5
+  },
+  {
+   "fieldname": "report_column",
+   "fieldtype": "Select",
+   "options": "Basic Salary\nFixed Allowance\nAirfare\nOvertime\nOther Additions\nLeave Salary\nIncrement\nClaim Amount\nLeave Deduction\nAttendance Deduction\nInstallment\nWarning Deduction\nOther Deductions\nPASI\nSec Fund",
+   "label": "Report Column",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 5
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-15 11:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "Payroll Report Component",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
