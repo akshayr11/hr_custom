@@ -8,6 +8,12 @@ from frappe.model.naming import make_autoname
 from frappe.query_builder.functions import Coalesce, NullIf
 from frappe.utils import flt, get_last_day, getdate
 
+from hr_custom.hr_custom.doctype.ohb_bank_loan.ohb_bank_loan import (
+	LOAN_ENTRY,
+	SALARY_ENTRY,
+	get_loan_installments,
+	update_paid_amounts,
+)
 from hr_custom.utils import EMPLOYEE_CATEGORIES, employee_payroll_cost_center, has_employee_category
 
 MONTHS = [
@@ -50,6 +56,13 @@ class BankLetter(Document):
 	def on_submit(self):
 		if not self.employees:
 			frappe.throw(_("Add at least one employee before submitting"))
+		self.update_loans()
+
+	def on_cancel(self):
+		self.update_loans()
+
+	def update_loans(self):
+		update_paid_amounts([d.ohb_bank_loan for d in self.employees if d.entry_type == LOAN_ENTRY])
 
 	def get_month_number(self):
 		return MONTHS.index(self.month) + 1
@@ -86,11 +99,13 @@ class BankLetter(Document):
 			)
 
 	def validate_duplicate_employees(self):
+		# an employee with an OHB loan has two rows: salary and loan installment
 		seen = set()
 		for row in self.employees:
-			if row.employee in seen:
+			key = (row.employee, row.entry_type or SALARY_ENTRY)
+			if key in seen:
 				frappe.throw(_("Row {0}: Employee {1} is added more than once").format(row.idx, row.employee))
-			seen.add(row.employee)
+			seen.add(key)
 
 	def validate_already_included(self):
 		included = get_included_employees(self.company, self.month, self.year, self.ot_type, self.name)
@@ -104,7 +119,7 @@ class BankLetter(Document):
 				)
 
 	def set_totals(self):
-		self.total_employees = len(self.employees)
+		self.total_employees = len({d.employee for d in self.employees})
 		self.total_ot_amount = sum(flt(d.ot_amount) for d in self.employees)
 		self.total_amount = sum(flt(d.amount) for d in self.employees)
 
@@ -147,6 +162,11 @@ class BankLetter(Document):
 			row.ot_amount += ot_amount
 			row.payment_days += flt(slip.payment_days)
 
+		# OHB loan installments come out of the salary, never out of an OT-only transfer
+		loans = {}
+		if self.ot_type != "OT Only":
+			loans = get_loan_installments(self.company, rows, self.get_period()[1])
+
 		for row in rows.values():
 			if self.ot_type == "With OT":
 				row.amount = row.net_pay
@@ -155,8 +175,32 @@ class BankLetter(Document):
 			else:
 				row.amount = row.ot_amount
 
-			if flt(row.amount) > 0:
+			if flt(row.amount) <= 0:
+				continue
+
+			row.entry_type = SALARY_ENTRY
+			loan = loans.get(row.employee)
+			installment = min(flt(loan.installment), flt(row.amount)) if loan else 0
+			row.amount = flt(row.amount) - installment
+			if row.amount > 0:
 				self.append("employees", row)
+
+			if installment > 0:
+				self.append(
+					"employees",
+					{
+						"employee": row.employee,
+						"employee_name": row.employee_name,
+						"cost_center": row.cost_center,
+						"department": row.department,
+						"entry_type": LOAN_ENTRY,
+						"ohb_bank_loan": loan.name,
+						"bank_name": loan.bank,
+						"bank_ac_no": loan.ohb_account_no,
+						"salary_slip": row.salary_slip,
+						"amount": installment,
+					},
+				)
 
 		if rows and not self.employees:
 			reason = _("{0} employee(s) matched, but their amount to transfer is 0 for {1}.").format(

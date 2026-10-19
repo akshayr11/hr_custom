@@ -1,0 +1,298 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2026-10-19 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "section_break_employee",
+  "employee",
+  "employee_name",
+  "location",
+  "payroll_cost_center",
+  "column_break_employee1",
+  "department",
+  "designation",
+  "job_category",
+  "column_break_employee2",
+  "employee_type",
+  "date_of_joining",
+  "gross_salary",
+  "company",
+  "currency",
+  "section_break_loan",
+  "bank",
+  "ohb_account_no",
+  "loan_date",
+  "column_break_loan1",
+  "total_loan_amount",
+  "monthly_installment",
+  "status",
+  "column_break_loan2",
+  "paid_amount",
+  "balance_amount",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "OHB-LOAN-.YYYY.-",
+   "default": "OHB-LOAN-.YYYY.-",
+   "reqd": 1,
+   "hidden": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "section_break_employee",
+   "fieldtype": "Section Break",
+   "label": "Employee"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Emp. No",
+   "options": "Employee",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payroll_cost_center",
+   "fieldtype": "Link",
+   "label": "Payroll Cost Center",
+   "options": "Cost Center",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_employee1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "job_category",
+   "fieldtype": "Data",
+   "label": "Job Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_employee2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee_type",
+   "fieldtype": "Data",
+   "label": "Employee Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "date_of_joining",
+   "fieldtype": "Date",
+   "label": "Date of Join",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gross_salary",
+   "fieldtype": "Currency",
+   "label": "Gross Salary",
+   "options": "currency",
+   "read_only": 1,
+   "description": "Monthly gross as per the Salary Structure assigned to the employee"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "section_break_loan",
+   "fieldtype": "Section Break",
+   "label": "Loan Details"
+  },
+  {
+   "fieldname": "bank",
+   "fieldtype": "Link",
+   "label": "Loan Bank",
+   "options": "Bank",
+   "reqd": 1,
+   "description": "Bank the monthly installment is transferred to (e.g. OHB)"
+  },
+  {
+   "fieldname": "ohb_account_no",
+   "fieldtype": "Data",
+   "label": "OHB Account No",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "loan_date",
+   "fieldtype": "Date",
+   "label": "Loan Date",
+   "reqd": 1,
+   "description": "Installments are deducted in Bank Letters from this month onwards"
+  },
+  {
+   "fieldname": "column_break_loan1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_loan_amount",
+   "fieldtype": "Currency",
+   "label": "Total Loan Amount",
+   "options": "currency",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "monthly_installment",
+   "fieldtype": "Currency",
+   "label": "Monthly Installment",
+   "options": "currency",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nInactive",
+   "default": "Active",
+   "reqd": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Only Approved loans with status Active are deducted in Bank Letters. Can be changed after approval."
+  },
+  {
+   "fieldname": "column_break_loan2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "paid_amount",
+   "fieldtype": "Currency",
+   "label": "Paid Amount",
+   "options": "currency",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "description": "Installments transferred through submitted Bank Letters"
+  },
+  {
+   "fieldname": "balance_amount",
+   "fieldtype": "Currency",
+   "label": "Balance Amount",
+   "options": "currency",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "OHB Bank Loan",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-19 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "OHB Bank Loan",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "search_fields": "employee_name,ohb_account_no",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}
