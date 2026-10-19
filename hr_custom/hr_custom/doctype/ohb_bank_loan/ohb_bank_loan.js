@@ -27,11 +27,14 @@ frappe.ui.form.on("OHB Bank Loan", {
 			});
 		}
 
-		if (frm.doc.docstatus === 1) {
+		if (frm.doc.docstatus === 1 && frm.doc.balance_amount <= 0) {
+			frm.set_intro(__("Loan fully paid: Bank Letters no longer deduct an installment."), "blue");
+		} else if (frm.doc.docstatus === 1) {
 			frm.set_intro(
 				frm.doc.status === "Active"
-					? __("Installment of {0} is deducted from the salary in Bank Letters and transferred to the OHB account.", [
+					? __("Installment of {0} is deducted from the salary in Bank Letters and transferred to the OHB account until the balance of {1} is paid.", [
 							format_currency(frm.doc.monthly_installment, frm.doc.currency),
+							format_currency(frm.doc.balance_amount, frm.doc.currency),
 					  ])
 					: __("Loan is Inactive: Bank Letters pay the full salary to the employee's account."),
 				frm.doc.status === "Active" ? "green" : "orange"

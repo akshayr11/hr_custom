@@ -163,15 +163,64 @@ def get_paid_amounts(loans):
 
 
 def update_paid_amounts(loans):
-	"""Called when a Bank Letter is submitted / cancelled."""
+	"""Called when a Bank Letter is submitted / cancelled: rebuild each loan's repayment history,
+	paid amount and balance from its submitted Bank Letters."""
+	from hr_custom.hr_custom.doctype.bank_letter.bank_letter import MONTHS
+
 	loans = list({d for d in loans if d})
-	paid = get_paid_amounts(loans)
+	if not loans:
+		return
+
+	bl = frappe.qb.DocType("Bank Letter")
+	ble = frappe.qb.DocType("Bank Letter Employee")
+	payments = (
+		frappe.qb.from_(ble)
+		.join(bl)
+		.on(ble.parent == bl.name)
+		.select(ble.ohb_bank_loan, ble.amount, bl.name, bl.month, bl.year, bl.letter_date)
+		.where(
+			(ble.parenttype == "Bank Letter")
+			& (bl.docstatus == 1)
+			& (ble.entry_type == LOAN_ENTRY)
+			& (ble.ohb_bank_loan.isin(loans))
+		)
+		.run(as_dict=True)
+	)
+
 	for loan in loans:
-		total = frappe.db.get_value("OHB Bank Loan", loan, "total_loan_amount")
+		total = flt(frappe.db.get_value("OHB Bank Loan", loan, "total_loan_amount"))
+		rows = sorted(
+			(d for d in payments if d.ohb_bank_loan == loan),
+			key=lambda d: (d.year, MONTHS.index(d.month), getdate(d.letter_date), d.name),
+		)
+
+		# child rows are written directly: the loan is submitted and the Bank Letter's user may
+		# not have edit rights on it
+		frappe.db.delete("OHB Loan Repayment", {"parent": loan, "parenttype": "OHB Bank Loan"})
+		balance = total
+		for idx, d in enumerate(rows, 1):
+			opening, balance = balance, balance - flt(d.amount)
+			frappe.get_doc(
+				{
+					"doctype": "OHB Loan Repayment",
+					"parent": loan,
+					"parenttype": "OHB Bank Loan",
+					"parentfield": "repayments",
+					"idx": idx,
+					"bank_letter": d.name,
+					"month": d.month,
+					"year": d.year,
+					"letter_date": d.letter_date,
+					"opening_balance": opening,
+					"installment": d.amount,
+					"balance": balance,
+				}
+			).db_insert()
+
 		frappe.db.set_value(
 			"OHB Bank Loan",
 			loan,
-			{"paid_amount": paid.get(loan, 0), "balance_amount": flt(total) - paid.get(loan, 0)},
+			{"paid_amount": total - balance, "balance_amount": balance},
 			update_modified=False,
 		)
 
@@ -202,5 +251,6 @@ def get_loan_installments(company, employees, period_end):
 		installment = min(flt(loan.monthly_installment), balance)
 		if installment > 0 and loan.employee not in result:
 			loan.installment = installment
+			loan.balance = balance
 			result[loan.employee] = loan
 	return result

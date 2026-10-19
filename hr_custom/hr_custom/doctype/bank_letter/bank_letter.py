@@ -199,6 +199,7 @@ class BankLetter(Document):
 						"bank_ac_no": loan.ohb_account_no,
 						"salary_slip": row.salary_slip,
 						"amount": installment,
+						"loan_balance": flt(loan.balance) - installment,
 					},
 				)
 
