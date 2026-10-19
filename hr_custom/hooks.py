@@ -205,6 +205,7 @@ doc_events = {
 extend_doctype_class = {
 	"Payroll Entry": "hr_custom.overrides.payroll_entry.PayrollEntryMixin",
 	"Salary Structure Assignment": "hr_custom.overrides.salary_structure_assignment.SalaryStructureAssignmentMixin",
+	"Salary Slip": "hr_custom.overrides.salary_structure_assignment.SalarySlipMixin",
 }
 
 # Overriding Methods

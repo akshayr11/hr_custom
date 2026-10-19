@@ -333,5 +333,19 @@ def diagnose():
 	).run()
 	report["active_without_payroll_cost_center"] = [f"{d[0]} {d[1]}" for d in no_cc]
 
+	from hr_custom.overrides.salary_structure_assignment import AIRFARE_COMPONENT, get_airfare_field
+
+	airfare_field = get_airfare_field()
+	report["airfare_field"] = airfare_field
+	report["airfare_component_exists"] = bool(frappe.db.exists("Salary Component", AIRFARE_COMPONENT))
+	report["airfare_component_accounts"] = frappe.get_all(
+		"Salary Component Account", {"parent": AIRFARE_COMPONENT}, ["company", "account"]
+	)
+	if airfare_field:
+		report["active_with_airfare"] = frappe.db.count("Employee", {**active, airfare_field: (">", 0)})
+	import hrms
+
+	report["hrms_version"] = getattr(hrms, "__version__", "?")
+
 	for key, value in report.items():
 		print(f"{key}: {value}")

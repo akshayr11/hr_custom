@@ -6,6 +6,8 @@ is appended there, so the slip treats it exactly like a structure component (for
 totals, accounting). Structures that already contain Airfare are left alone.
 """
 
+import copy
+
 import frappe
 from frappe import _
 
@@ -14,10 +16,27 @@ AIRFARE_ABBR = "AF"
 
 
 class SalaryStructureAssignmentMixin:
+	"""Newer HRMS (16.10+): slips get their structure components evaluated here."""
+
 	def _evaluate_component_table(self, rows, data):
 		if rows and rows[0].get("parentfield") == "earnings":
 			rows = add_airfare_row(rows)
 		return super()._evaluate_component_table(rows, data)
+
+
+class SalarySlipMixin:
+	"""Older HRMS (e.g. 16.4): the slip reads components straight from its Salary Structure. Give the
+	slip a private copy of the structure with the Airfare row added (the cached structure is untouched).
+	Newer HRMS has no set_salary_structure_doc, so this never runs there."""
+
+	def set_salary_structure_doc(self):
+		super().set_salary_structure_doc()
+		earnings = list(self._salary_structure_doc.get("earnings") or [])
+		with_airfare = add_airfare_row(earnings)
+		if len(with_airfare) != len(earnings):
+			structure = copy.copy(self._salary_structure_doc)
+			structure.earnings = with_airfare
+			self._salary_structure_doc = structure
 
 
 def get_airfare_field():
