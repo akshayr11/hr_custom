@@ -18,11 +18,13 @@ def before_migrate():
 def after_install():
 	make_custom_fields()
 	make_it_masters()
+	make_ohb_loan_workflow()
 
 
 def after_migrate():
 	make_custom_fields()
 	make_it_masters()
+	make_ohb_loan_workflow()
 
 
 # default entries for the IT Service Request masters; only added when missing, so edits are kept
@@ -70,6 +72,48 @@ def make_it_masters():
 		for record in records:
 			if not frappe.db.exists(doctype, record[key]):
 				frappe.get_doc({"doctype": doctype, **record}).insert(ignore_permissions=True)
+
+
+# OHB Bank Loan approval: Draft -> Pending Approval -> Approved (HR Manager). Only created when the
+# doctype has no workflow yet, so changes made in the Workflow form are kept.
+OHB_LOAN_WORKFLOW = {
+	"workflow_name": "OHB Bank Loan",
+	"document_type": "OHB Bank Loan",
+	"workflow_state_field": "workflow_state",
+	"is_active": 1,
+	"send_email_alert": 0,
+	"states": [
+		{"state": "Draft", "doc_status": "0", "allow_edit": "HR User"},
+		{"state": "Pending Approval", "doc_status": "0", "allow_edit": "HR Manager"},
+		{"state": "Approved", "doc_status": "1", "allow_edit": "HR Manager"},
+		{"state": "Rejected", "doc_status": "0", "allow_edit": "HR Manager"},
+	],
+	"transitions": [
+		{"state": "Draft", "action": "Send for Approval", "next_state": "Pending Approval", "allowed": "HR User"},
+		{"state": "Pending Approval", "action": "Approve", "next_state": "Approved", "allowed": "HR Manager"},
+		{"state": "Pending Approval", "action": "Reject", "next_state": "Rejected", "allowed": "HR Manager"},
+		{"state": "Rejected", "action": "Send for Approval", "next_state": "Pending Approval", "allowed": "HR User"},
+	],
+}
+
+
+def make_ohb_loan_workflow():
+	workflow = OHB_LOAN_WORKFLOW
+	if frappe.db.exists("Workflow", {"document_type": workflow["document_type"]}):
+		return
+
+	for state in workflow["states"]:
+		if not frappe.db.exists("Workflow State", state["state"]):
+			frappe.get_doc({"doctype": "Workflow State", "workflow_state_name": state["state"]}).insert(
+				ignore_permissions=True
+			)
+	for action in {t["action"] for t in workflow["transitions"]}:
+		if not frappe.db.exists("Workflow Action Master", action):
+			frappe.get_doc({"doctype": "Workflow Action Master", "workflow_action_name": action}).insert(
+				ignore_permissions=True
+			)
+
+	frappe.get_doc({"doctype": "Workflow", **workflow}).insert(ignore_permissions=True)
 
 
 def make_roles():
