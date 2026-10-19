@@ -32,6 +32,8 @@
   "column_break_loan2",
   "paid_amount",
   "balance_amount",
+  "section_break_history",
+  "repayments",
   "amended_from"
  ],
  "fields": [
@@ -228,6 +230,22 @@
    "no_copy": 1
   },
   {
+   "fieldname": "section_break_history",
+   "fieldtype": "Section Break",
+   "label": "Repayment History",
+   "depends_on": "eval:doc.docstatus==1"
+  },
+  {
+   "fieldname": "repayments",
+   "fieldtype": "Table",
+   "label": "Repayments",
+   "options": "OHB Loan Repayment",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "description": "Installments transferred to the OHB account through submitted Bank Letters. Bank Letters keep deducting the installment until the balance is 0."
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -239,7 +257,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-19 12:00:00.000000",
+ "modified": "2026-10-19 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Custom",
  "name": "OHB Bank Loan",
