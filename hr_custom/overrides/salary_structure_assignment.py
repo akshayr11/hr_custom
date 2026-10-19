@@ -14,6 +14,20 @@ from frappe import _
 AIRFARE_COMPONENT = "Airfare"
 AIRFARE_ABBR = "AF"
 
+# Salary Component settings carried onto the Airfare row
+COMPONENT_FLAGS = (
+	"depends_on_payment_days",
+	"is_tax_applicable",
+	"is_flexible_benefit",
+	"variable_based_on_taxable_salary",
+	"exempted_from_income_tax",
+	"deduct_full_tax_on_selected_payroll_date",
+	"statistical_component",
+	"accrual_component",
+	"do_not_include_in_total",
+	"do_not_include_in_accounts",
+)
+
 
 class SalaryStructureAssignmentMixin:
 	"""Newer HRMS (16.10+): slips get their structure components evaluated here."""
@@ -58,14 +72,11 @@ def add_airfare_row(rows):
 	if not fieldname or not frappe.db.exists("Salary Component", AIRFARE_COMPONENT):
 		return rows
 
-	from hrms.payroll.doctype.salary_structure_assignment.salary_structure_assignment import (
-		SALARY_COMPONENT_FLAGS,
-	)
-
 	component = frappe.get_cached_doc("Salary Component", AIRFARE_COMPONENT)
 	row = frappe.new_doc("Salary Detail")
-	for field in SALARY_COMPONENT_FLAGS:
-		if component.meta.has_field(field):
+	# own list (not imported from HRMS: older versions don't have one); copy what both doctypes have
+	for field in COMPONENT_FLAGS:
+		if component.meta.has_field(field) and row.meta.has_field(field):
 			row.set(field, component.get(field))
 	row.update(
 		{
