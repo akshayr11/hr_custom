@@ -78,10 +78,9 @@ doctype_js = {"Service Request": "public/js/service_request.js"}
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "hr_custom.utils.jinja_methods",
-# 	"filters": "hr_custom.utils.jinja_filters"
-# }
+jinja = {
+	"methods": ["hr_custom.payslip.get_payslip_data"],
+}
 
 # Installation
 # ------------
