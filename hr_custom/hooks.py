@@ -44,7 +44,10 @@ app_license = "mit"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-doctype_js = {"Service Request": "public/js/service_request.js"}
+doctype_js = {
+	"Service Request": "public/js/service_request.js",
+	"Gratuity": "public/js/gratuity.js",
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -205,6 +208,7 @@ extend_doctype_class = {
 	"Payroll Entry": "hr_custom.overrides.payroll_entry.PayrollEntryMixin",
 	"Salary Structure Assignment": "hr_custom.overrides.salary_structure_assignment.SalaryStructureAssignmentMixin",
 	"Salary Slip": "hr_custom.overrides.salary_structure_assignment.SalarySlipMixin",
+	"Gratuity": "hr_custom.overrides.gratuity.GratuityMixin",
 }
 
 # Overriding Methods

@@ -209,6 +209,7 @@ def make_custom_fields():
 	make_service_request_fields()
 	make_airfare_component()
 	make_workflow_user_fields()
+	make_gratuity_fields()
 	update_employee_categories()
 
 
@@ -237,6 +238,12 @@ def make_nationality_field():
 
 def make_workflow_user_fields():
 	from hr_custom.overrides.workflow_users import make_fields
+
+	make_fields()
+
+
+def make_gratuity_fields():
+	from hr_custom.overrides.gratuity import make_fields
 
 	make_fields()
 

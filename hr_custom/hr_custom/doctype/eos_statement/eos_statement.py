@@ -53,23 +53,52 @@ class EOSStatement(Document):
 		self.employee_category = emp.get("employee_category") or get_employee_category(self.nationality)
 
 	def calculate(self):
-		doj, till = getdate(self.date_of_joining), getdate(self.till_date)
-		self.service_days = date_diff(till, doj) + 1
-		period = relativedelta(add_days(till, 1), doj)
-		self.service_period = _("{0} Years {1} Months {2} Days").format(period.years, period.months, period.days)
-
-		reasons = get_ineligibility_reasons(self.employee_category, self.service_days)
-		self.eligible = int(not reasons)
-		self.eligibility_remarks = " ".join(reasons) if reasons else _("Eligible")
-		self.gratuity_details = []
-		self.total_gratuity = 0
-		if not self.eligible:
-			return
-
-		result = calculate_gratuity(self.employee, doj, till)
+		for field in ("current_basic", "freeze_basic", "freeze_basic_record", "freeze_till_date", "calculation_basis"):
+			self.set(field, None)
+		result = get_gratuity(self.employee, self.till_date, self.employee_category, self.date_of_joining)
 		self.update({k: v for k, v in result.items() if k != "details"})
 		self.set("gratuity_details", result["details"])
-		self.total_gratuity = flt(sum(flt(d.amount) for d in self.gratuity_details), 3)
+
+
+def get_gratuity(employee, till_date, employee_category=None, date_of_joining=None):
+	"""Service, eligibility and gratuity of an employee up to `till_date` (used by EOS Statement,
+	Gratuity and the Gratuity Details report)."""
+	if not date_of_joining or not employee_category:
+		emp = frappe.db.get_value("Employee", employee, ["date_of_joining"], as_dict=True)
+		date_of_joining = date_of_joining or emp.date_of_joining
+		employee_category = employee_category or get_category(employee)
+
+	doj, till = getdate(date_of_joining), getdate(till_date)
+	service_days = date_diff(till, doj) + 1
+	period = relativedelta(add_days(till, 1), doj)
+	reasons = get_ineligibility_reasons(employee_category, service_days)
+
+	result = {
+		"employee_category": employee_category,
+		"service_days": service_days,
+		"service_period": _("{0} Years {1} Months {2} Days").format(period.years, period.months, period.days),
+		"eligible": int(not reasons),
+		"eligibility_remarks": " ".join(reasons) if reasons else _("Eligible"),
+		"details": [],
+		"total_gratuity": 0,
+	}
+	if reasons:
+		return result
+
+	result.update(calculate_gratuity(employee, doj, till))
+	result["total_gratuity"] = flt(sum(flt(d["amount"]) for d in result["details"]), 3)
+	return result
+
+
+def get_category(employee):
+	fields = ["employee_category"] if frappe.get_meta("Employee").has_field("employee_category") else []
+	nationality_field = get_nationality_field()
+	if nationality_field:
+		fields.append(nationality_field)
+	if not fields:
+		return None
+	emp = frappe.db.get_value("Employee", employee, fields, as_dict=True)
+	return emp.get("employee_category") or get_employee_category(emp.get(nationality_field))
 
 
 def get_ineligibility_reasons(employee_category, service_days):
