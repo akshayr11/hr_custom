@@ -1,0 +1,290 @@
+{
+ "actions": [],
+ "creation": "2026-10-26 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "employee",
+  "till_date",
+  "column_break_0",
+  "employee_name",
+  "section_break_employee",
+  "department",
+  "designation",
+  "column_break_1",
+  "nationality",
+  "employee_category",
+  "column_break_2",
+  "date_of_joining",
+  "company",
+  "currency",
+  "section_break_service",
+  "service_days",
+  "service_period",
+  "column_break_3",
+  "current_basic",
+  "freeze_basic_record",
+  "freeze_basic",
+  "freeze_till_date",
+  "column_break_4",
+  "calculation_basis",
+  "section_break_gratuity",
+  "eligible",
+  "eligibility_remarks",
+  "gratuity_details",
+  "total_gratuity"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "EOS-.YYYY.-",
+   "default": "EOS-.YYYY.-",
+   "reqd": 1,
+   "hidden": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Emp No",
+   "options": "Employee",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "till_date",
+   "fieldtype": "Date",
+   "label": "Till Date",
+   "reqd": 1,
+   "default": "Today",
+   "in_list_view": 1,
+   "description": "Last day of service to calculate up to"
+  },
+  {
+   "fieldname": "column_break_0",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "fetch_from": "employee.employee_name",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_employee",
+   "fieldtype": "Section Break",
+   "label": "Employee"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "fetch_from": "employee.department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "fetch_from": "employee.designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nationality",
+   "fieldtype": "Data",
+   "label": "Nationality",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee_category",
+   "fieldtype": "Data",
+   "label": "Employee Category",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_of_joining",
+   "fieldtype": "Date",
+   "label": "Date of Joining",
+   "fetch_from": "employee.date_of_joining",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "employee.company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_service",
+   "fieldtype": "Section Break",
+   "label": "Service"
+  },
+  {
+   "fieldname": "service_days",
+   "fieldtype": "Int",
+   "label": "Days in Service",
+   "read_only": 1
+  },
+  {
+   "fieldname": "service_period",
+   "fieldtype": "Data",
+   "label": "Service Period",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_basic",
+   "fieldtype": "Currency",
+   "label": "Current Basic",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "freeze_basic_record",
+   "fieldtype": "Link",
+   "label": "Freeze Basic",
+   "options": "Employee Freeze Basic",
+   "read_only": 1
+  },
+  {
+   "fieldname": "freeze_basic",
+   "fieldtype": "Currency",
+   "label": "Freeze Basic Amount",
+   "options": "currency",
+   "depends_on": "freeze_basic_record",
+   "read_only": 1
+  },
+  {
+   "fieldname": "freeze_till_date",
+   "fieldtype": "Date",
+   "label": "Freeze Basic Till",
+   "depends_on": "freeze_basic_record",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "calculation_basis",
+   "fieldtype": "Small Text",
+   "label": "Calculation Basis",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_gratuity",
+   "fieldtype": "Section Break",
+   "label": "Gratuity"
+  },
+  {
+   "fieldname": "eligible",
+   "fieldtype": "Check",
+   "label": "Eligible for Gratuity",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "eligibility_remarks",
+   "fieldtype": "Small Text",
+   "label": "Eligibility",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gratuity_details",
+   "fieldtype": "Table",
+   "label": "Gratuity Calculation",
+   "options": "EOS Gratuity Detail",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_gratuity",
+   "fieldtype": "Currency",
+   "label": "Total Gratuity",
+   "options": "currency",
+   "in_list_view": 1,
+   "bold": 1,
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-26 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "EOS Statement",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "title_field": "employee_name",
+ "search_fields": "employee_name",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  }
+ ],
+ "default_print_format": "EOS Statement"
+}

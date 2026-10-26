@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "creation": "2026-10-26 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "from_date",
+  "to_date",
+  "days",
+  "basic_type",
+  "basic",
+  "rate",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "in_list_view": 1,
+   "columns": 2,
+   "read_only": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "in_list_view": 1,
+   "columns": 2,
+   "read_only": 1
+  },
+  {
+   "fieldname": "days",
+   "fieldtype": "Int",
+   "label": "Days",
+   "in_list_view": 1,
+   "columns": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "basic_type",
+   "fieldtype": "Data",
+   "label": "Basic",
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "Freeze or Current basic",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basic",
+   "fieldtype": "Currency",
+   "label": "Basic Salary",
+   "options": "currency",
+   "in_list_view": 1,
+   "columns": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Data",
+   "label": "Rate",
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "Half basic (first 3 years, joined on or before 31-Jul-2023) or Full basic",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Gratuity",
+   "options": "currency",
+   "in_list_view": 1,
+   "columns": 2,
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-26 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "EOS Gratuity Detail",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1,
+ "permissions": []
+}
