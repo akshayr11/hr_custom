@@ -58,16 +58,7 @@ class EOSStatement(Document):
 		period = relativedelta(add_days(till, 1), doj)
 		self.service_period = _("{0} Years {1} Months {2} Days").format(period.years, period.months, period.days)
 
-		reasons = []
-		if self.employee_category != "Expat":
-			reasons.append(
-				_("Nationality is not set on the Employee, so the employee is not known to be an Expat.")
-				if not self.employee_category
-				else _("Gratuity is applicable only for Expats (employee is {0}).").format(_(self.employee_category))
-			)
-		if self.service_days <= MIN_SERVICE_DAYS:
-			reasons.append(_("Service of {0} days is not more than 1 year.").format(self.service_days))
-
+		reasons = get_ineligibility_reasons(self.employee_category, self.service_days)
 		self.eligible = int(not reasons)
 		self.eligibility_remarks = " ".join(reasons) if reasons else _("Eligible")
 		self.gratuity_details = []
@@ -78,13 +69,27 @@ class EOSStatement(Document):
 		result = calculate_gratuity(self.employee, doj, till)
 		self.update({k: v for k, v in result.items() if k != "details"})
 		self.set("gratuity_details", result["details"])
-		self.total_gratuity = sum(flt(d.amount) for d in self.gratuity_details)
+		self.total_gratuity = flt(sum(flt(d.amount) for d in self.gratuity_details), 3)
 
 
-def calculate_gratuity(employee, date_of_joining, till_date):
+def get_ineligibility_reasons(employee_category, service_days):
+	reasons = []
+	if employee_category != "Expat":
+		reasons.append(
+			_("Nationality is not set on the Employee, so the employee is not known to be an Expat.")
+			if not employee_category
+			else _("Gratuity is applicable only for Expats (employee is {0}).").format(_(employee_category))
+		)
+	if service_days <= MIN_SERVICE_DAYS:
+		reasons.append(_("Service of {0} days is not more than 1 year.").format(service_days))
+	return reasons
+
+
+def calculate_gratuity(employee, date_of_joining, till_date, current_basic=None):
 	"""Gratuity split into periods with the same basic and rate."""
 	doj, till = getdate(date_of_joining), getdate(till_date)
-	current_basic = get_current_basic(employee, till)
+	if current_basic is None:
+		current_basic = get_current_basic(employee, till)
 	freeze = get_freeze_basic(employee)
 
 	half_basic = doj <= HALF_BASIC_JOINED_UPTO
