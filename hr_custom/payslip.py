@@ -112,6 +112,8 @@ def get_payslip_data(doc):
 		basic_pay=basic_pay,
 		allowances=allowances,
 		total_pay=basic_pay + allowances,
+		# HRMS keeps loan repayments out of total_deduction (net pay = gross - deductions - loan)
+		total_deductions=flt(doc.total_deduction) + loan,
 		status=_("Hold") if doc.get("status") == "Withheld" else _("Pay"),
 		month=getdate(doc.start_date).strftime("%b-%Y"),
 	)
