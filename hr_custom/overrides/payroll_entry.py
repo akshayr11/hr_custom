@@ -80,3 +80,11 @@ class PayrollEntryMixin:
 						row.idx, frappe.bold(row.employee), self.get_filter_description()
 					)
 				)
+
+
+def get_dashboard_data(data):
+	"""Hide Overtime Slip from the Payroll Entry connections (overtime is paid through the salary slip)."""
+	for group in data.get("transactions") or []:
+		group["items"] = [d for d in group.get("items", []) if d != "Overtime Slip"]
+	data["transactions"] = [g for g in data.get("transactions") or [] if g.get("items")]
+	return data

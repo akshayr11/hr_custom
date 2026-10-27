@@ -227,6 +227,9 @@ extend_doctype_class = {
 # override_doctype_dashboards = {
 # 	"Task": "hr_custom.task.get_dashboard_data"
 # }
+override_doctype_dashboards = {
+	"Payroll Entry": "hr_custom.overrides.payroll_entry.get_dashboard_data",
+}
 
 # exempt linked doctypes from being automatically cancelled
 #
