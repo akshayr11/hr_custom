@@ -18,13 +18,13 @@ def before_migrate():
 def after_install():
 	make_custom_fields()
 	make_it_masters()
-	make_ohb_loan_workflow()
+	make_workflows()
 
 
 def after_migrate():
 	make_custom_fields()
 	make_it_masters()
-	make_ohb_loan_workflow()
+	make_workflows()
 
 
 # default entries for the IT Service Request masters; only added when missing, so edits are kept
@@ -97,8 +97,46 @@ OHB_LOAN_WORKFLOW = {
 }
 
 
+# Job Offer approval: Draft -> Pending Approval -> Approved (HR Manager). The offer's own Status
+# (Awaiting Response / Accepted / ...) is left to the user, as HRMS needs it for Create Employee.
+JOB_OFFER_WORKFLOW = {
+	"workflow_name": "Job Offer",
+	"document_type": "Job Offer",
+	"workflow_state_field": "workflow_state",
+	"is_active": 1,
+	"send_email_alert": 0,
+	"states": [
+		{"state": "Draft", "doc_status": "0", "allow_edit": "HR User"},
+		{"state": "Pending Approval", "doc_status": "0", "allow_edit": "HR Manager"},
+		{"state": "Approved", "doc_status": "1", "allow_edit": "HR Manager"},
+		{"state": "Rejected", "doc_status": "0", "allow_edit": "HR Manager"},
+	],
+	"transitions": [
+		{"state": "Draft", "action": "Send for Approval", "next_state": "Pending Approval", "allowed": "HR User"},
+		{"state": "Pending Approval", "action": "Approve", "next_state": "Approved", "allowed": "HR Manager"},
+		{"state": "Pending Approval", "action": "Reject", "next_state": "Rejected", "allowed": "HR Manager"},
+		{"state": "Rejected", "action": "Send for Approval", "next_state": "Pending Approval", "allowed": "HR User"},
+	],
+}
+
+
+def make_workflows():
+	for workflow in (OHB_LOAN_WORKFLOW, JOB_OFFER_WORKFLOW):
+		make_workflow(workflow)
+
+
 def make_ohb_loan_workflow():
-	workflow = OHB_LOAN_WORKFLOW
+	make_workflow(OHB_LOAN_WORKFLOW)
+
+
+def make_job_offer_workflow():
+	make_workflow(JOB_OFFER_WORKFLOW)
+
+
+def make_workflow(workflow):
+	"""Create the workflow unless the doctype already has one (edits made in the Workflow form are kept)."""
+	if not frappe.db.exists("DocType", workflow["document_type"]):
+		return
 	if frappe.db.exists("Workflow", {"document_type": workflow["document_type"]}):
 		return
 
