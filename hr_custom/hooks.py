@@ -161,6 +161,9 @@ doc_events = {
 	"Employee": {
 		"validate": "hr_custom.utils.set_employee_category",
 	},
+	"Job Requisition": {
+		"validate": "hr_custom.overrides.job_requisition.validate",
+	},
 	"Service Request": {
 		"validate": "hr_custom.overrides.service_request.validate",
 	},
