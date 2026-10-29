@@ -160,7 +160,10 @@ after_migrate = "hr_custom.setup.after_migrate"
 
 doc_events = {
 	"Employee": {
-		"validate": "hr_custom.utils.set_employee_category",
+		"validate": [
+			"hr_custom.utils.set_employee_category",
+			"hr_custom.overrides.employee_onboarding.set_employee_passport_details",
+		],
 	},
 	"Job Requisition": {
 		"validate": "hr_custom.overrides.job_requisition.validate",
@@ -169,6 +172,8 @@ doc_events = {
 	},
 	"Employee Onboarding": {
 		"validate": "hr_custom.overrides.employee_onboarding.validate",
+		"on_update": "hr_custom.overrides.employee_onboarding.on_update",
+		"on_update_after_submit": "hr_custom.overrides.employee_onboarding.on_update",
 	},
 	"Service Request": {
 		"validate": "hr_custom.overrides.service_request.validate",

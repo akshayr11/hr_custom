@@ -2,6 +2,7 @@
 the Labor Clearance link).
 
 Both stay editable after the onboarding is submitted (visa processing / travel continue after it).
+Passport details are copied to the employee (Personal Details > Passport Details).
 On save, an empty visa Name is taken from the employee / applicant, and the Labor Clearance from the
 Job Requisition the applicant was hired against (Job Applicant -> Job Opening -> Job Requisition).
 """
@@ -11,6 +12,13 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 DOCTYPE = "Employee Onboarding"
 CLEARANCE = "Labor Clearance"
+# onboarding Visa Details -> Employee Passport Details
+PASSPORT_FIELDS = {
+	"visa_passport_no": "passport_number",
+	"visa_passport_issue_date": "date_of_issue",
+	"visa_passport_expiry_date": "valid_upto",
+	"visa_place_of_issue": "place_of_issue",
+}
 
 
 def validate(doc, method=None):
@@ -21,6 +29,34 @@ def validate(doc, method=None):
 
 	if doc.meta.has_field("visa_labor_clearance") and not doc.visa_labor_clearance:
 		doc.visa_labor_clearance = get_labor_clearance(doc.job_applicant)
+
+
+def on_update(doc, method=None):
+	"""Passport details entered in the onboarding are copied to its employee."""
+	if not doc.employee:
+		return
+	values = {emp_field: doc.get(field) for field, emp_field in PASSPORT_FIELDS.items() if doc.get(field)}
+	current = frappe.db.get_value("Employee", doc.employee, list(values), as_dict=True) if values else {}
+	changed = {k: v for k, v in values.items() if str(current.get(k) or "") != str(v)}
+	if changed:
+		frappe.db.set_value("Employee", doc.employee, changed)
+
+
+def set_employee_passport_details(doc, method=None):
+	"""Employee validate: fill empty passport fields from the applicant's onboarding (e.g. an employee
+	created from the onboarding)."""
+	if not doc.job_applicant or not frappe.get_meta(DOCTYPE).has_field("visa_passport_no"):
+		return
+	onboarding = frappe.db.get_value(
+		DOCTYPE,
+		{"job_applicant": doc.job_applicant, "docstatus": ("<", 2)},
+		list(PASSPORT_FIELDS),
+		as_dict=True,
+		order_by="creation desc",
+	)
+	for field, emp_field in PASSPORT_FIELDS.items():
+		if onboarding and onboarding.get(field) and not doc.get(emp_field):
+			doc.set(emp_field, onboarding.get(field))
 
 
 def get_labor_clearance(job_applicant):
