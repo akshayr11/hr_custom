@@ -167,6 +167,9 @@ doc_events = {
 		"on_update": "hr_custom.overrides.job_requisition.on_update",
 		"on_trash": "hr_custom.overrides.job_requisition.on_trash",
 	},
+	"Employee Onboarding": {
+		"validate": "hr_custom.overrides.employee_onboarding.validate",
+	},
 	"Service Request": {
 		"validate": "hr_custom.overrides.service_request.validate",
 	},
