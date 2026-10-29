@@ -249,6 +249,7 @@ def make_custom_fields():
 	make_workflow_user_fields()
 	make_gratuity_fields()
 	make_job_requisition_fields()
+	make_employee_onboarding_fields()
 	update_employee_categories()
 
 
@@ -283,6 +284,12 @@ def make_workflow_user_fields():
 
 def make_job_requisition_fields():
 	from hr_custom.overrides.job_requisition import make_fields
+
+	make_fields()
+
+
+def make_employee_onboarding_fields():
+	from hr_custom.overrides.employee_onboarding import make_fields
 
 	make_fields()
 
