@@ -1,4 +1,5 @@
-"""Employee Onboarding: Visa Details and Ticket Details tabs.
+"""Employee Onboarding: Visa Details and Ticket Details tabs (Data fields except dates, Visa Status and
+the Labor Clearance link).
 
 Both stay editable after the onboarding is submitted (visa processing / travel continue after it).
 On save, an empty visa Name is taken from the employee / applicant, and the Labor Clearance from the
@@ -41,38 +42,44 @@ def make_fields():
 	def field(fieldname, fieldtype, label=None, **kw):
 		return {"fieldname": fieldname, "fieldtype": fieldtype, "label": label, "allow_on_submit": 1, **kw}
 
-	# Labor Clearance is a site doctype; without it the clearance no. is typed in
-	if frappe.db.exists("DocType", CLEARANCE):
-		clearance = [
-			field("visa_labor_clearance", "Link", "Desig As per Clearance", options=CLEARANCE),
-			field(
-				"visa_labor_clearance_no",
-				"Data",
-				"Labor Clearance No",
-				fetch_from="visa_labor_clearance.job_code_as_per_clearance",
-				fetch_if_empty=1,
-			),
-		]
-	else:
-		clearance = [
-			field("visa_labor_clearance_no", "Data", "Labor Clearance No"),
-			field("visa_designation_as_per_clearance", "Link", "Desig As per Clearance", options="Designation"),
-		]
+	# Labor Clearance is a site doctype; a link to it can only be made where it exists
+	clearance = (
+		[field("visa_labor_clearance", "Link", "Desig As per Clearance", options=CLEARANCE)]
+		if frappe.db.exists("DocType", CLEARANCE)
+		else []
+	)
+	# replaced by the Labor Clearance link
+	if frappe.db.exists("Custom Field", f"{DOCTYPE}-visa_designation_as_per_clearance"):
+		frappe.delete_doc("Custom Field", f"{DOCTYPE}-visa_designation_as_per_clearance", force=1)
 
 	visa = [
 		{"fieldname": "visa_details_tab", "fieldtype": "Tab Break", "label": "Visa Details"},
 		field("visa_name", "Data", "Name"),
-		field("visa_status", "Select", "Visa Status", options="New\nIn Process\nApproved\nIssued\nRejected\nCancelled", default="New", in_standard_filter=1),
+		field(
+			"visa_status",
+			"Select",
+			"Visa Status",
+			options="New\nApplied\nReady\nSent\nDeposited\nCancelled",
+			default="New",
+			in_standard_filter=1,
+		),
 		field("visa_passport_no", "Data", "Passport No"),
 		field("visa_place_of_birth", "Data", "Place of Birth"),
 		field("visa_place_of_issue", "Data", "Place of Issue"),
-		field("visa_issued_country", "Link", "Issued Country", options="Country"),
+		field("visa_issued_country", "Data", "Issued Country"),
 		field("visa_passport_issue_date", "Date", "Date of Issue"),
 		field("visa_passport_expiry_date", "Date", "Date of Expiry"),
 		{"fieldname": "visa_column_break", "fieldtype": "Column Break"},
-		field("visa_type", "Select", "Type of Visa", options="\nEmployment Visa\nFamily Joining Visa\nVisit Visa\nBusiness Visa"),
+		field("visa_type", "Data", "Type of Visa"),
 		field("visa_father_name", "Data", "Father's Name"),
 		field("visa_mother_name", "Data", "Mother's Name"),
+		field(
+			"visa_labor_clearance_no",
+			"Data",
+			"Labor Clearance No",
+			fetch_from="visa_labor_clearance.job_code_as_per_clearance" if clearance else None,
+			fetch_if_empty=1 if clearance else 0,
+		),
 		*clearance,
 	]
 	ticket = [
@@ -80,8 +87,8 @@ def make_fields():
 		field("ticket_no", "Data", "Ticket No"),
 		field("ticket_issue_date", "Date", "Issue Date"),
 		field("ticket_arrival_date", "Date", "Arrival Date"),
-		field("ticket_arrival_time", "Time", "Arrival Time"),
-		field("ticket_amount", "Currency", "Ticket Amount"),
+		field("ticket_arrival_time", "Data", "Arrival Time"),
+		field("ticket_amount", "Data", "Ticket Amount"),
 		{"fieldname": "ticket_column_break", "fieldtype": "Column Break"},
 		field("ticket_from_location", "Data", "From Location"),
 		field("ticket_to_location", "Data", "To Location"),
@@ -95,4 +102,16 @@ def make_fields():
 	for df in visa + ticket:
 		fields.append({**df, "insert_after": previous})
 		previous = df["fieldname"]
+
+	change_field_types(fields)
 	create_custom_fields({DOCTYPE: fields}, update=True)
+	frappe.db.updatedb(DOCTYPE)
+
+
+def change_field_types(fields):
+	"""Frappe refuses some type changes on save (e.g. Link -> Data), so fields made with an earlier
+	type are switched directly; updatedb then changes the column."""
+	for df in fields:
+		name = f"{DOCTYPE}-{df['fieldname']}"
+		if frappe.db.get_value("Custom Field", name, "fieldtype") not in (None, df["fieldtype"]):
+			frappe.db.set_value("Custom Field", name, {"fieldtype": df["fieldtype"], "options": df.get("options")})
