@@ -250,6 +250,7 @@ def make_custom_fields():
 	make_gratuity_fields()
 	make_job_requisition_fields()
 	make_employee_onboarding_fields()
+	make_employee_id_fields()
 	update_employee_categories()
 
 
@@ -286,6 +287,54 @@ def make_job_requisition_fields():
 	from hr_custom.overrides.job_requisition import make_fields
 
 	make_fields()
+
+
+def make_employee_id_fields():
+	"""Employee 'Passport Details' becomes 'ID Details', with Civil ID expiry and driving license.
+
+	Left column: Passport Number, Valid Up To, Civil ID, Driving License No
+	Right column: Date of Issue, Place of Issue, Civil ID Expiry Date, DL Expiry Date
+	"""
+	make_property_setter(
+		"Employee", "passport_details_section", "label", "ID Details", "Data", validate_fields_for_doctype=False
+	)
+
+	# Civil ID is a site custom field (e.g. custom_civil_id), found by its label
+	civil_id = next(
+		(
+			df.fieldname
+			for df in frappe.get_meta("Employee").fields
+			if "civil" in (df.label or "").lower()
+			and "expiry" not in (df.label or "").lower()
+			and df.fieldtype == "Data"
+		),
+		None,
+	)
+	create_custom_fields(
+		{
+			"Employee": [
+				{
+					"fieldname": "driving_license_no",
+					"fieldtype": "Data",
+					"label": "Driving License No",
+					"insert_after": civil_id or "valid_upto",
+				},
+				{
+					"fieldname": "civil_id_expiry_date",
+					"fieldtype": "Date",
+					"label": "Civil ID Expiry Date",
+					"insert_after": "place_of_issue",
+				},
+				{
+					"fieldname": "dl_expiry_date",
+					"fieldtype": "Date",
+					"label": "DL Expiry Date",
+					"insert_after": "civil_id_expiry_date",
+				},
+			]
+		},
+		update=True,
+	)
 
 
 def make_employee_onboarding_fields():
