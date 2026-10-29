@@ -290,10 +290,10 @@ def make_job_requisition_fields():
 
 
 def make_employee_id_fields():
-	"""Employee 'Passport Details' becomes 'ID Details', with Civil ID expiry and driving license.
+	"""Employee 'Passport Details' becomes 'ID Details', with Civil ID expiry, driving license and visa.
 
-	Left column: Passport Number, Valid Up To, Civil ID, Driving License No
-	Right column: Date of Issue, Place of Issue, Civil ID Expiry Date, DL Expiry Date
+	Left column: Passport Number, Valid Up To, Civil ID, Driving License No, Visa No
+	Right column: Date of Issue, Place of Issue, Civil ID Expiry Date, DL Expiry Date, Visa Expiry Date
 	"""
 	make_property_setter(
 		"Employee", "passport_details_section", "label", "ID Details", "Data", validate_fields_for_doctype=False
@@ -330,6 +330,18 @@ def make_employee_id_fields():
 					"fieldtype": "Date",
 					"label": "DL Expiry Date",
 					"insert_after": "civil_id_expiry_date",
+				},
+				{
+					"fieldname": "visa_no",
+					"fieldtype": "Data",
+					"label": "Visa No",
+					"insert_after": "driving_license_no",
+				},
+				{
+					"fieldname": "visa_expiry_date",
+					"fieldtype": "Date",
+					"label": "Visa Expiry Date",
+					"insert_after": "dl_expiry_date",
 				},
 			]
 		},
