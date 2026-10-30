@@ -251,6 +251,7 @@ def make_custom_fields():
 	make_job_requisition_fields()
 	make_employee_onboarding_fields()
 	make_employee_id_fields()
+	make_loan_fields()
 	update_employee_categories()
 
 
@@ -347,6 +348,12 @@ def make_employee_id_fields():
 		},
 		update=True,
 	)
+
+
+def make_loan_fields():
+	from hr_custom.overrides.loan import make_fields
+
+	make_fields()
 
 
 def make_employee_onboarding_fields():

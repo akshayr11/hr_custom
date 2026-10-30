@@ -48,6 +48,7 @@ doctype_js = {
 	"Service Request": "public/js/service_request.js",
 	"Gratuity": "public/js/gratuity.js",
 	"Job Offer": "public/js/job_offer.js",
+	"Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -223,6 +224,9 @@ extend_doctype_class = {
 	"Salary Structure Assignment": "hr_custom.overrides.salary_structure_assignment.SalaryStructureAssignmentMixin",
 	"Salary Slip": "hr_custom.overrides.salary_structure_assignment.SalarySlipMixin",
 	"Gratuity": "hr_custom.overrides.gratuity.GratuityMixin",
+	# Lending: Advance Salary schedules are reviewed (Draft) before they become active
+	"Loan Disbursement": "hr_custom.overrides.loan.LoanDisbursementMixin",
+	"Loan Repayment Schedule": "hr_custom.overrides.loan.LoanRepaymentScheduleMixin",
 }
 
 # Overriding Methods
