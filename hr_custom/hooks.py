@@ -48,6 +48,7 @@ doctype_js = {
 	"Service Request": "public/js/service_request.js",
 	"Gratuity": "public/js/gratuity.js",
 	"Job Offer": "public/js/job_offer.js",
+	"Employee Promotion": "public/js/employee_promotion.js",
 	"Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -165,6 +166,9 @@ doc_events = {
 			"hr_custom.utils.set_employee_category",
 			"hr_custom.overrides.employee_onboarding.set_employee_passport_details",
 		],
+	},
+	"Employee Promotion": {
+		"validate": "hr_custom.overrides.employee_promotion.validate",
 	},
 	"Job Requisition": {
 		"validate": "hr_custom.overrides.job_requisition.validate",
