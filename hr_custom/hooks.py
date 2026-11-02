@@ -50,6 +50,7 @@ doctype_js = {
 	"Job Offer": "public/js/job_offer.js",
 	"Employee Promotion": "public/js/employee_promotion.js",
 	"Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
+	"Leave Application": "public/js/leave_application.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -165,7 +166,12 @@ doc_events = {
 		"validate": [
 			"hr_custom.utils.set_employee_category",
 			"hr_custom.overrides.employee_onboarding.set_employee_passport_details",
+			"hr_custom.overrides.rejoin_date.set_on_employee",
 		],
+	},
+	"Leave Application": {
+		"on_submit": "hr_custom.overrides.rejoin_date.on_leave_application_change",
+		"on_cancel": "hr_custom.overrides.rejoin_date.on_leave_application_change",
 	},
 	"Employee Promotion": {
 		"validate": "hr_custom.overrides.employee_promotion.validate",
