@@ -120,9 +120,36 @@ JOB_OFFER_WORKFLOW = {
 }
 
 
+# Employee Rejoining: Draft -> Pending Approval -> Approved (HR Manager); approving submits it,
+# which updates the Rejoin Date and the leave balance.
+EMPLOYEE_REJOINING_WORKFLOW = {
+	"workflow_name": "Employee Rejoining",
+	"document_type": "Employee Rejoining",
+	"workflow_state_field": "workflow_state",
+	"is_active": 1,
+	"send_email_alert": 0,
+	"states": [
+		{"state": "Draft", "doc_status": "0", "allow_edit": "HR User"},
+		{"state": "Pending Approval", "doc_status": "0", "allow_edit": "HR Manager"},
+		{"state": "Approved", "doc_status": "1", "allow_edit": "HR Manager"},
+		{"state": "Rejected", "doc_status": "0", "allow_edit": "HR Manager"},
+	],
+	"transitions": [
+		{"state": "Draft", "action": "Send for Approval", "next_state": "Pending Approval", "allowed": "HR User"},
+		{"state": "Pending Approval", "action": "Approve", "next_state": "Approved", "allowed": "HR Manager"},
+		{"state": "Pending Approval", "action": "Reject", "next_state": "Rejected", "allowed": "HR Manager"},
+		{"state": "Rejected", "action": "Send for Approval", "next_state": "Pending Approval", "allowed": "HR User"},
+	],
+}
+
+
 def make_workflows():
-	for workflow in (OHB_LOAN_WORKFLOW, JOB_OFFER_WORKFLOW):
+	for workflow in (OHB_LOAN_WORKFLOW, JOB_OFFER_WORKFLOW, EMPLOYEE_REJOINING_WORKFLOW):
 		make_workflow(workflow)
+
+
+def make_employee_rejoining_workflow():
+	make_workflow(EMPLOYEE_REJOINING_WORKFLOW)
 
 
 def make_ohb_loan_workflow():
@@ -252,6 +279,7 @@ def make_custom_fields():
 	make_employee_onboarding_fields()
 	make_employee_id_fields()
 	make_loan_fields()
+	make_rejoin_date_fields()
 	update_employee_categories()
 
 
@@ -358,6 +386,12 @@ def make_loan_fields():
 
 def make_employee_onboarding_fields():
 	from hr_custom.overrides.employee_onboarding import make_fields
+
+	make_fields()
+
+
+def make_rejoin_date_fields():
+	from hr_custom.overrides.rejoin_date import make_fields
 
 	make_fields()
 
