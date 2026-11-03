@@ -168,6 +168,7 @@ doc_events = {
 			"hr_custom.overrides.employee_onboarding.set_employee_passport_details",
 			"hr_custom.overrides.rejoin_date.set_on_employee",
 		],
+		"before_insert": "hr_custom.overrides.job_applicant.before_insert",
 	},
 	"Leave Application": {
 		"on_submit": "hr_custom.overrides.rejoin_date.on_leave_application_change",
@@ -245,6 +246,10 @@ extend_doctype_class = {
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "hr_custom.event.get_events"
 # }
+override_whitelisted_methods = {
+	"hrms.hr.doctype.job_offer.job_offer.make_employee": "hr_custom.overrides.job_applicant.make_employee_from_job_offer",
+	"hrms.hr.doctype.employee_onboarding.employee_onboarding.make_employee": "hr_custom.overrides.job_applicant.make_employee_from_onboarding",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
