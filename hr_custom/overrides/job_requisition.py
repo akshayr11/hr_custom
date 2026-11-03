@@ -1,6 +1,10 @@
 """Job Requisition: Justification is mandatory for a non-budgeted position, and the positions of
 a requisition are taken from its Labor Clearance (Used / Remaining Number).
 
+Used on the clearance master is the running count: a requisition adds its positions to it (and
+gives them back when rejected, cancelled, deleted or moved to another clearance), so a Used
+entered on the master by hand is kept. Remaining = Total - Used.
+
 Budgeted / Justification and the Labor Clearance link are site fields, so they are looked up by
 name / label / options instead of being hard-coded.
 """
@@ -25,15 +29,19 @@ def on_update(doc, method=None):
 	field = get_clearance_field(doc.meta)
 	if not field:
 		return
-	before = doc.get_doc_before_save()
-	update_clearances([doc.get(field), before and before.get(field)])
+	old_clearance, old_positions = get_counted_positions(doc.get_doc_before_save(), field)
+	new_clearance, new_positions = get_counted_positions(doc, field)
+	if (old_clearance, old_positions) != (new_clearance, new_positions):
+		adjust_used(old_clearance, -old_positions)
+		adjust_used(new_clearance, new_positions)
 	refresh_fetched_values(doc, field)
 
 
 def on_trash(doc, method=None):
 	field = get_clearance_field(doc.meta)
 	if field:
-		update_clearances([doc.get(field)], exclude=doc.name)
+		clearance, positions = get_counted_positions(doc, field)
+		adjust_used(clearance, -positions)
 
 
 def validate_justification(doc):
@@ -115,34 +123,31 @@ def counts_against_clearance(doc):
 	)
 
 
-def get_used_positions(clearance, field, exclude=None):
-	jr = frappe.qb.DocType(DOCTYPE)
-	query = (
-		frappe.qb.from_(jr)
-		.select(frappe.query_builder.functions.Sum(jr.no_of_positions))
-		.where((jr[field] == clearance) & (jr.docstatus < 2) & (jr.status.notin(RELEASED_STATUSES)))
-	)
-	if frappe.get_meta(DOCTYPE).has_field("workflow_state"):
-		query = query.where(jr.workflow_state.isnull() | jr.workflow_state.notin(RELEASED_STATUSES))
-	if exclude:
-		query = query.where(jr.name != exclude)
-	return flt(query.run()[0][0])
+def get_counted_positions(doc, field):
+	"""(clearance, positions) the requisition takes from its clearance; nothing when released."""
+	if not doc or not doc.get(field) or not counts_against_clearance(doc):
+		return None, 0
+	return doc.get(field), flt(doc.no_of_positions)
 
 
 def validate_clearance_positions(doc):
 	"""A requisition cannot ask for more positions than its clearance still has."""
 	field = get_clearance_field(doc.meta)
-	clearance = field and doc.get(field)
-	if not clearance or not counts_against_clearance(doc):
+	clearance, positions = get_counted_positions(doc, field) if field else (None, 0)
+	if not clearance:
 		return
 
-	total = flt(frappe.db.get_value(CLEARANCE, clearance, "total_number"))
-	used = get_used_positions(clearance, field, exclude=None if doc.is_new() else doc.name)
+	values = frappe.db.get_value(CLEARANCE, clearance, ["total_number", "used"], as_dict=True) or {}
+	total, used = flt(values.get("total_number")), flt(values.get("used"))
+	# positions this requisition already holds on the same clearance are part of Used
+	old_clearance, old_positions = get_counted_positions(doc.get_doc_before_save(), field)
+	if old_clearance == clearance:
+		used -= old_positions
 	remaining = total - used
-	if flt(doc.no_of_positions) > remaining:
+	if positions > remaining:
 		frappe.throw(
 			_("Labor Clearance {0} has only {1} of {2} positions remaining; this requisition asks for {3}.").format(
-				frappe.bold(clearance), frappe.bold(f"{remaining:g}"), f"{total:g}", frappe.bold(f"{flt(doc.no_of_positions):g}")
+				frappe.bold(clearance), frappe.bold(f"{remaining:g}"), f"{total:g}", frappe.bold(f"{positions:g}")
 			),
 			title=_("Not Enough Positions"),
 		)
@@ -160,21 +165,10 @@ def refresh_fetched_values(doc, field):
 		doc.db_set(values, update_modified=False)
 
 
-def update_clearances(clearances, exclude=None):
-	"""Used = positions of the requisitions linked to the clearance, Remaining = Total - Used."""
-	field = get_clearance_field(frappe.get_meta(DOCTYPE))
-	if not field:
+def adjust_used(clearance, positions):
+	"""Used += positions on the clearance master, Remaining = Total - Used."""
+	if not clearance or not positions or not frappe.db.exists(CLEARANCE, clearance):
 		return
-	for clearance in {c for c in clearances if c}:
-		if not frappe.db.exists(CLEARANCE, clearance):
-			continue
-		used = get_used_positions(clearance, field, exclude=exclude)
-		total = flt(frappe.db.get_value(CLEARANCE, clearance, "total_number"))
-		frappe.db.set_value(CLEARANCE, clearance, {"used": used, "remaining_number": total - used})
-
-
-@frappe.whitelist()
-def recalculate_all_clearances():
-	"""Fill Used / Remaining for existing clearances (run once after deploying)."""
-	frappe.only_for(("System Manager", "HR Manager"))
-	update_clearances(frappe.get_all(CLEARANCE, pluck="name"))
+	values = frappe.db.get_value(CLEARANCE, clearance, ["total_number", "used"], as_dict=True, for_update=True)
+	used = max(flt(values.used) + positions, 0)
+	frappe.db.set_value(CLEARANCE, clearance, {"used": used, "remaining_number": flt(values.total_number) - used})
