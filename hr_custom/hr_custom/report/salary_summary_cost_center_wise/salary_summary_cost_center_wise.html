@@ -1,0 +1,38 @@
+{%
+	var columns = report.get_columns_for_print().filter((c) => !c.hidden && c.fieldname !== "currency");
+	var months = [];
+	data.forEach((row) => {
+		if (row.is_heading) months.push({ title: row.location, rows: [] });
+		else if (months.length && row.location) months[months.length - 1].rows.push(row);
+	});
+	var cell = (row, c) => {
+		var value = row[c.fieldname];
+		if (c.fieldtype == "Currency") return format_number(value || 0, null, 3);
+		return is_null(value) ? "" : value;
+	};
+%}
+<style>
+	.salary-summary th, .salary-summary td { font-size: 9px; padding: 3px !important; vertical-align: top; }
+	.salary-summary th { text-align: center; }
+</style>
+<h3 class="text-center"><b>{%= __("SALARY SUMMARY (COST CENTER WISE)") %}</b></h3>
+{% months.forEach((month) => { %}
+	<h4 class="text-center" style="margin-top: 20px;"><b><u>{%= month.title %}</u></b></h4>
+	<table class="table table-bordered salary-summary">
+		<thead>
+			<tr>
+				{% columns.forEach((c) => { %}<th>{%= c.label %}</th>{% }) %}
+			</tr>
+		</thead>
+		<tbody>
+			{% month.rows.forEach((row) => { %}
+				<tr {% if (row.bold) { %}style="font-weight: bold;"{% } %}>
+					{% columns.forEach((c, i) => { %}
+						<td class="{%= i ? 'text-right' : '' %}">{%= cell(row, c) %}</td>
+					{% }) %}
+				</tr>
+			{% }) %}
+		</tbody>
+	</table>
+{% }) %}
+<p class="text-right text-muted">{%= __("Printed On {0}", [frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string())]) %}</p>
