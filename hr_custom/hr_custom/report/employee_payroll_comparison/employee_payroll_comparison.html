@@ -1,0 +1,50 @@
+{%
+	var sections = [];
+	data.forEach((row) => {
+		if (row.is_heading) sections.push({ title: row.cost_center, groups: [] });
+		else if (sections.length && row.employee) {
+			var groups = sections[sections.length - 1].groups;
+			if (!groups.length || groups[groups.length - 1].cost_center !== row.cost_center)
+				groups.push({ cost_center: row.cost_center, rows: [] });
+			groups[groups.length - 1].rows.push(row);
+		}
+	});
+%}
+<style>
+	.payroll-comparison th, .payroll-comparison td { font-size: 10px; padding: 3px !important; }
+	.payroll-comparison .section { background: #d3d3d3; font-weight: bold; font-size: 13px; text-align: center; padding: 4px; margin-top: 20px; }
+	.payroll-comparison thead th { background: #d3d3d3; }
+	.payroll-comparison .cc td { font-weight: bold; background: #f2f2f2; }
+</style>
+<div class="payroll-comparison">
+	<h4 class="text-center"><b>{%= __("COMPARISON OF EMPLOYEE DETAILS BETWEEN SELECTED & PREVIOUS PAYROLL MONTHS") %}</b></h4>
+	{% sections.forEach((section) => { %}
+		<div class="section">{%= section.title %}</div>
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>{%= __("Emp No") %}</th><th>{%= __("Emp Full Name") %}</th><th>{%= __("JobTitle") %}</th>
+					<th class="text-right">{%= __("Net Salary") %}</th><th>{%= __("Reason") %}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% if (!section.groups.length) { %}
+					<tr><td colspan="5" class="text-muted">{%= __("None") %}</td></tr>
+				{% } %}
+				{% section.groups.forEach((group) => { %}
+					<tr class="cc"><td colspan="5">{%= group.cost_center %}</td></tr>
+					{% group.rows.forEach((row) => { %}
+						<tr>
+							<td>{%= row.employee %}</td>
+							<td>{%= row.employee_name || "" %}</td>
+							<td>{%= row.designation || "" %}</td>
+							<td class="text-right">{%= format_number(row.net_salary || 0, null, 3) %}</td>
+							<td>{%= row.reason || "" %}</td>
+						</tr>
+					{% }) %}
+				{% }) %}
+			</tbody>
+		</table>
+	{% }) %}
+	<p class="text-right text-muted">{%= __("Printed On {0}", [frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string())]) %}</p>
+</div>
