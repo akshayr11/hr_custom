@@ -1,21 +1,32 @@
-// 'Save Details from Offer': assign the offer's Leave Policy and Salary Structure to the employee
-// created from the offer
-frappe.ui.form.on("Job Offer", {
+// 'Save Details from Offer': assign the offer's Leave Policy and Salary Structure to an
+// employee created from a Job Offer (button shown on the Employee, after its first save).
+frappe.ui.form.on("Employee", {
 	refresh(frm) {
-		if (frm.doc.docstatus !== 1 || !frm.doc.__onload || !frm.doc.__onload.employee) return;
+		if (frm.is_new() || !frm.doc.job_applicant) return;
 
-		frm.add_custom_button(__("Save Details from Offer"), () => {
-			frappe.call({
-				method: "hr_custom.overrides.job_offer.get_offer_details",
-				args: { job_offer: frm.doc.name },
-				freeze: true,
-				callback: (r) => r.message && confirm_save(frm, r.message),
+		frappe.db
+			.get_list("Job Offer", {
+				filters: { job_applicant: frm.doc.job_applicant, docstatus: 1 },
+				fields: ["name"],
+				limit: 1,
+			})
+			.then((offers) => {
+				if (!offers.length) return;
+				const job_offer = offers[0].name;
+
+				frm.add_custom_button(__("Save Details from Offer"), () => {
+					frappe.call({
+						method: "hr_custom.overrides.job_offer.get_offer_details",
+						args: { job_offer },
+						freeze: true,
+						callback: (r) => r.message && confirm_save(job_offer, r.message),
+					});
+				});
 			});
-		});
 	},
 });
 
-function confirm_save(frm, d) {
+function confirm_save(job_offer, d) {
 	const esc = frappe.utils.escape_html;
 	const link = (doctype, name) =>
 		`<a href="/app/${frappe.router.slug(doctype)}/${encodeURIComponent(name)}">${esc(name)}</a>`;
@@ -93,7 +104,7 @@ function confirm_save(frm, d) {
 		dialog.set_primary_action(__("Save"), () => {
 			frappe.call({
 				method: "hr_custom.overrides.job_offer.save_details_from_offer",
-				args: { job_offer: frm.doc.name },
+				args: { job_offer },
 				freeze: true,
 				freeze_message: __("Creating..."),
 				callback: (r) => {
