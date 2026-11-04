@@ -47,7 +47,7 @@ app_license = "mit"
 doctype_js = {
 	"Service Request": "public/js/service_request.js",
 	"Gratuity": "public/js/gratuity.js",
-	"Job Offer": "public/js/job_offer.js",
+	"Employee": "public/js/employee.js",
 	"Employee Promotion": "public/js/employee_promotion.js",
 	"Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
 	"Leave Application": "public/js/leave_application.js",
