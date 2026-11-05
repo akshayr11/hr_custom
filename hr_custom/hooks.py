@@ -238,6 +238,9 @@ extend_doctype_class = {
 	# Lending: Advance Salary schedules are reviewed (Draft) before they become active
 	"Loan Disbursement": "hr_custom.overrides.loan.LoanDisbursementMixin",
 	"Loan Repayment Schedule": "hr_custom.overrides.loan.LoanRepaymentScheduleMixin",
+	# non-budgeted requisitions are hired without a Staffing Plan
+	"Job Opening": "hr_custom.overrides.staffing_plan.JobOpeningMixin",
+	"Job Offer": "hr_custom.overrides.staffing_plan.JobOfferMixin",
 }
 
 # Overriding Methods
