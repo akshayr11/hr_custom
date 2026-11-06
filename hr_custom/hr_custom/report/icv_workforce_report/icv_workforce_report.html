@@ -1,0 +1,70 @@
+{%
+	var columns = [
+		{ label: __("Sl No"), value: (row, i) => i + 1, align: "center" },
+		{ label: __("Sourced By"), field: "sourced_by" },
+		{ label: __("Are you Registering JSRS?"), field: "jsrs_registering" },
+		{ label: __("JSRS or CR Number"), field: "jsrs_cr_no" },
+		{ label: __("Vendor Category"), field: "vendor_category" },
+		{ label: __("Civil ID"), field: "civil_id" },
+		{ label: __("Work Type"), field: "work_type" },
+		{ label: __("Omani/ Expat"), field: "employee_category" },
+		{ label: __("Qualification Category"), field: "qualification" },
+		{ label: __("Category"), field: "icv_job_category" },
+		{ label: __("Sub Category"), field: "icv_designation" },
+		{ label: __("Hours Worked"), field: "total_hours_worked", precision: 2 },
+		{ label: __("Compensation per Hour (USD)"), field: "compensation_per_hour", precision: 3 },
+		{ label: __("Total Compensation (USD)"), field: "total_compensation_usd", precision: 3 },
+	];
+	var cell = (row, c, i) => {
+		if (c.value) return c.value(row, i);
+		var value = row[c.field];
+		if (c.precision) return format_number(value || 0, null, c.precision);
+		return is_null(value) ? "" : value;
+	};
+	var rows = data.filter((row) => row.employee);
+	var total = (field) => rows.reduce((sum, row) => sum + flt(row[field]), 0);
+	var period = (month, year) => month + " " + year;
+%}
+<style>
+	.icv-report th, .icv-report td { font-size: 9px; padding: 3px !important; vertical-align: top; }
+	.icv-report th { background-color: #d9d9d9 !important; }
+	.icv-header td { font-size: 11px; font-weight: bold; padding: 2px 6px; border: none !important; }
+</style>
+<h3 class="text-center"><b>{%= __("ICV WORKFORCE REPORT") %}</b></h3>
+<table class="icv-header" style="margin: 15px auto;">
+	<tr>
+		<td>{%= __("From Date:") %}</td>
+		<td style="padding-right: 60px;">{%= period(filters.from_month, filters.from_year) %}</td>
+		<td>{%= __("To Date:") %}</td>
+		<td>{%= period(filters.to_month, filters.to_year) %}</td>
+	</tr>
+	<tr>
+		<td>{%= __("Location:") %}</td>
+		<td style="padding-right: 60px;">{%= filters.payroll_cost_center || __("All") %}</td>
+		<td>{%= __("Emp Category:") %}</td>
+		<td>{%= filters.employee_category || __("All") %}</td>
+	</tr>
+</table>
+<table class="table table-bordered icv-report">
+	<thead>
+		<tr>
+			{% columns.forEach((c) => { %}<th>{%= c.label %}</th>{% }) %}
+		</tr>
+	</thead>
+	<tbody>
+		{% rows.forEach((row, i) => { %}
+			<tr>
+				{% columns.forEach((c) => { %}
+					<td class="{%= c.precision ? 'text-right' : (c.align == 'center' ? 'text-center' : '') %}">{%= cell(row, c, i) %}</td>
+				{% }) %}
+			</tr>
+		{% }) %}
+		<tr style="font-weight: bold;">
+			<td colspan="{%= columns.length - 3 %}" class="text-right">{%= __("Total") %}</td>
+			<td class="text-right">{%= format_number(total("total_hours_worked"), null, 2) %}</td>
+			<td></td>
+			<td class="text-right">{%= format_number(total("total_compensation_usd"), null, 3) %}</td>
+		</tr>
+	</tbody>
+</table>
+<p class="text-right text-muted">{%= __("Printed On {0}", [frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string())]) %}</p>
