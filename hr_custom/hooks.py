@@ -171,8 +171,22 @@ doc_events = {
 		"before_insert": "hr_custom.overrides.job_applicant.before_insert",
 	},
 	"Leave Application": {
-		"on_submit": "hr_custom.overrides.rejoin_date.on_leave_application_change",
-		"on_cancel": "hr_custom.overrides.rejoin_date.on_leave_application_change",
+		"on_submit": [
+			"hr_custom.overrides.rejoin_date.on_leave_application_change",
+			"hr_custom.overrides.attendance.on_leave_or_request_change",
+		],
+		"on_cancel": [
+			"hr_custom.overrides.rejoin_date.on_leave_application_change",
+			"hr_custom.overrides.attendance.on_leave_or_request_change",
+		],
+	},
+	# attendance day code (P, L, E, LV, R, A, Ex) and attendance deduction minutes
+	"Attendance": {
+		"validate": "hr_custom.overrides.attendance.validate",
+	},
+	"Attendance Request": {
+		"on_submit": "hr_custom.overrides.attendance.on_leave_or_request_change",
+		"on_cancel": "hr_custom.overrides.attendance.on_leave_or_request_change",
 	},
 	"Employee Promotion": {
 		"validate": "hr_custom.overrides.employee_promotion.validate",
