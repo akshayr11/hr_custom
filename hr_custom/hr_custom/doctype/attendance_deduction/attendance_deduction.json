@@ -1,0 +1,237 @@
+{
+ "actions": [],
+ "creation": "2026-11-12 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "from_date",
+  "to_date",
+  "payroll_cost_center",
+  "column_break_header",
+  "salary_component",
+  "payroll_date",
+  "deduction_divisor",
+  "currency",
+  "section_break_employees",
+  "employees",
+  "section_break_totals",
+  "total_employees",
+  "column_break_totals",
+  "total_deduction_minutes",
+  "total_approved_minutes",
+  "column_break_totals2",
+  "total_deduction_amount",
+  "section_break_details",
+  "details",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "HR-ATD-.YYYY.-",
+   "default": "HR-ATD-.YYYY.-",
+   "reqd": 1,
+   "hidden": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1,
+   "remember_last_selected_value": 1
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "payroll_cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center",
+   "in_standard_filter": 1,
+   "description": "Leave empty for all. Includes child cost centers."
+  },
+  {
+   "fieldname": "column_break_header",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "salary_component",
+   "fieldtype": "Link",
+   "label": "Deduction Component",
+   "options": "Salary Component",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payroll_date",
+   "fieldtype": "Date",
+   "label": "Payroll Date",
+   "reqd": 1,
+   "description": "Date of the Additional Salary: the payroll it is deducted in"
+  },
+  {
+   "fieldname": "deduction_divisor",
+   "fieldtype": "Float",
+   "label": "Deduction Divisor (Minutes)",
+   "default": "14400",
+   "reqd": 1,
+   "non_negative": 1,
+   "description": "Deduction Amount = Total Salary x Minutes / Divisor"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "fetch_from": "company.default_currency",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "section_break_employees",
+   "fieldtype": "Section Break",
+   "label": "Employees"
+  },
+  {
+   "fieldname": "employees",
+   "fieldtype": "Table",
+   "label": "Employees",
+   "options": "Attendance Deduction Employee"
+  },
+  {
+   "fieldname": "section_break_totals",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_employees",
+   "fieldtype": "Int",
+   "label": "Total Employees",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_deduction_minutes",
+   "fieldtype": "Int",
+   "label": "Total Deduction Minutes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_approved_minutes",
+   "fieldtype": "Int",
+   "label": "Total Approved Minutes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_totals2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_deduction_amount",
+   "fieldtype": "Currency",
+   "label": "Total Deduction Amount",
+   "options": "currency",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_break_details",
+   "fieldtype": "Section Break",
+   "label": "Day-wise Details",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Table",
+   "label": "Details",
+   "options": "Attendance Deduction Detail",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Attendance Deduction",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "Attendance Deduction",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "is_submittable": 1,
+ "track_changes": 1
+}

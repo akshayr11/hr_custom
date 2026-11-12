@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "creation": "2026-11-12 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "attendance_date",
+  "attendance",
+  "shift",
+  "in_time",
+  "out_time",
+  "column_break_minutes",
+  "in_diff_minutes",
+  "out_diff_minutes",
+  "missing_out",
+  "worked_minutes",
+  "extra_minutes",
+  "deduction_minutes"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "attendance_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "attendance",
+   "fieldtype": "Link",
+   "label": "Attendance",
+   "options": "Attendance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "shift",
+   "fieldtype": "Link",
+   "label": "Shift",
+   "options": "Shift Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "in_time",
+   "fieldtype": "Datetime",
+   "label": "In Time",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "out_time",
+   "fieldtype": "Datetime",
+   "label": "Out Time",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "column_break_minutes",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "in_diff_minutes",
+   "fieldtype": "Int",
+   "label": "In Diff",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "out_diff_minutes",
+   "fieldtype": "Int",
+   "label": "Out Diff",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "missing_out",
+   "fieldtype": "Check",
+   "label": "No Check-out",
+   "read_only": 1
+  },
+  {
+   "fieldname": "worked_minutes",
+   "fieldtype": "Int",
+   "label": "Worked Minutes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "extra_minutes",
+   "fieldtype": "Int",
+   "label": "Extra Minutes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deduction_minutes",
+   "fieldtype": "Int",
+   "label": "Deduction Minutes",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "Attendance Deduction Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1
+}

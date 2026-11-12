@@ -1,0 +1,195 @@
+{
+ "actions": [],
+ "creation": "2026-11-12 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "checkin_file",
+  "column_break_upload",
+  "mark_attendance",
+  "status",
+  "section_break_result",
+  "total_rows",
+  "created_checkins",
+  "column_break_result",
+  "duplicate_rows",
+  "error_rows",
+  "column_break_result2",
+  "from_time",
+  "to_time",
+  "section_break_log",
+  "upload_log"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "HR-CHK-UPL-.YYYY.-",
+   "default": "HR-CHK-UPL-.YYYY.-",
+   "reqd": 1,
+   "hidden": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "remember_last_selected_value": 1
+  },
+  {
+   "fieldname": "checkin_file",
+   "fieldtype": "Attach",
+   "label": "Check-in File",
+   "reqd": 1,
+   "no_copy": 1,
+   "description": "Excel (.xlsx) or CSV, one row per punch: Employee (ID, Attendance Device ID or name), Time (date and time, or Date + Time columns), Log Type (IN / OUT, optional). Use Download Template."
+  },
+  {
+   "fieldname": "column_break_upload",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mark_attendance",
+   "fieldtype": "Check",
+   "label": "Mark Attendance after Upload",
+   "default": "1",
+   "description": "Runs Auto Attendance of the employees' Shift Types right after the check-ins are created"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nQueued\nUploaded\nPartly Uploaded\nFailed",
+   "default": "Draft",
+   "read_only": 1,
+   "no_copy": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "section_break_result",
+   "fieldtype": "Section Break",
+   "label": "Result"
+  },
+  {
+   "fieldname": "total_rows",
+   "fieldtype": "Int",
+   "label": "Total Rows",
+   "read_only": 1,
+   "no_copy": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "created_checkins",
+   "fieldtype": "Int",
+   "label": "Check-ins Created",
+   "read_only": 1,
+   "no_copy": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_result",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "duplicate_rows",
+   "fieldtype": "Int",
+   "label": "Already Uploaded (Skipped)",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "error_rows",
+   "fieldtype": "Int",
+   "label": "Rows with Errors",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_result2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_time",
+   "fieldtype": "Datetime",
+   "label": "First Check-in",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "to_time",
+   "fieldtype": "Datetime",
+   "label": "Last Check-in",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "section_break_log",
+   "fieldtype": "Section Break",
+   "label": "Upload Log",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "upload_log",
+   "fieldtype": "Long Text",
+   "label": "Upload Log",
+   "read_only": 1,
+   "no_copy": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-11-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "Employee Checkin Upload",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "track_changes": 1
+}

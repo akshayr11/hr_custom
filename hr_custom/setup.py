@@ -143,13 +143,26 @@ EMPLOYEE_REJOINING_WORKFLOW = {
 }
 
 
+# Attendance Deduction: the approver (HR Manager) can change the Approved Minutes while it is
+# Pending Approval; approving submits it, which creates the Additional Salary deductions.
+ATTENDANCE_DEDUCTION_WORKFLOW = {
+	**EMPLOYEE_REJOINING_WORKFLOW,
+	"workflow_name": "Attendance Deduction",
+	"document_type": "Attendance Deduction",
+}
+
+
 def make_workflows():
-	for workflow in (OHB_LOAN_WORKFLOW, JOB_OFFER_WORKFLOW, EMPLOYEE_REJOINING_WORKFLOW):
+	for workflow in (OHB_LOAN_WORKFLOW, JOB_OFFER_WORKFLOW, EMPLOYEE_REJOINING_WORKFLOW, ATTENDANCE_DEDUCTION_WORKFLOW):
 		make_workflow(workflow)
 
 
 def make_employee_rejoining_workflow():
 	make_workflow(EMPLOYEE_REJOINING_WORKFLOW)
+
+
+def make_attendance_deduction_workflow():
+	make_workflow(ATTENDANCE_DEDUCTION_WORKFLOW)
 
 
 def make_ohb_loan_workflow():
@@ -280,6 +293,7 @@ def make_custom_fields():
 	make_employee_id_fields()
 	make_loan_fields()
 	make_rejoin_date_fields()
+	make_attendance_fields()
 	update_employee_categories()
 
 
@@ -392,6 +406,12 @@ def make_employee_onboarding_fields():
 
 def make_rejoin_date_fields():
 	from hr_custom.overrides.rejoin_date import make_fields
+
+	make_fields()
+
+
+def make_attendance_fields():
+	from hr_custom.overrides.attendance import make_fields
 
 	make_fields()
 
