@@ -139,9 +139,9 @@ def get_employees(filters, start, end):
 	return employees
 
 
-def get_covered_days(doctype, employees, start, end, extra_filters=None):
-	"""{(employee, date)} covered by the submitted documents' From - To dates."""
-	days = set()
+def get_covered_days(doctype, employees, start, end, extra_filters=None, label_field="name"):
+	"""{(employee, date): label_field} of the days covered by the submitted documents' From - To dates."""
+	days = {}
 	for d in frappe.get_all(
 		doctype,
 		filters={
@@ -151,17 +151,17 @@ def get_covered_days(doctype, employees, start, end, extra_filters=None):
 			"to_date": (">=", start),
 			**(extra_filters or {}),
 		},
-		fields=["employee", "from_date", "to_date"],
+		fields=["employee", "from_date", "to_date", f"{label_field} as label"],
 	):
 		day = max(getdate(d.from_date), start)
 		while day <= min(getdate(d.to_date), end):
-			days.add((d.employee, day))
+			days[(d.employee, day)] = d.label
 			day = add_days(day, 1)
 	return days
 
 
 class HolidayDates:
-	"""Holiday dates of the employee's holiday list in the month (cached per holiday list)."""
+	"""{date: description} of the employee's holiday list in the period (cached per holiday list)."""
 
 	def __init__(self, start, end):
 		self.start, self.end, self.by_list = start, end, {}
@@ -171,14 +171,14 @@ class HolidayDates:
 
 		holiday_list = get_holiday_list_for_employee(employee, raise_exception=False)
 		if not holiday_list:
-			return set()
+			return {}
 		if holiday_list not in self.by_list:
 			self.by_list[holiday_list] = {
-				getdate(d)
+				getdate(d.holiday_date): d.description
 				for d in frappe.get_all(
 					"Holiday",
 					filters={"parent": holiday_list, "holiday_date": ("between", [self.start, self.end])},
-					pluck="holiday_date",
+					fields=["holiday_date", "description"],
 				)
 			}
 		return self.by_list[holiday_list]
