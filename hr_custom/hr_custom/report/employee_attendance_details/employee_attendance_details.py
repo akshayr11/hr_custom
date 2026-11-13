@@ -19,8 +19,14 @@ from hr_custom.hr_custom.report.attendance_detailed_report.attendance_detailed_r
 	get_covered_days,
 	get_employees,
 )
+from hr_custom.hr_custom.report.gratuity_details.gratuity_details import ID_FIELDS
 from hr_custom.overrides.attendance import CODES
-from hr_custom.utils import get_employee_payroll_details
+from hr_custom.utils import (
+	get_employee_category,
+	get_employee_payroll_details,
+	get_nationality_field,
+	has_employee_category,
+)
 
 MINUTE_COLUMNS = ("early_in", "late_in", "early_out", "late_out", "extra_minutes", "deduction_minutes")
 
@@ -47,6 +53,13 @@ def get_columns():
 	return [
 		{"fieldname": "employee", "label": _("Emp No"), "fieldtype": "Link", "options": "Employee", "width": 110},
 		text("employee_name", _("Name"), 150),
+		text("department", _("Department"), 120),
+		text("designation", _("Designation"), 120),
+		text("nationality", _("Nationality"), 90),
+		text("employee_category", _("Omani / Expat"), 80),
+		text("civil_id", _("Civil ID"), 100),
+		{"fieldname": "date_of_joining", "label": _("Joining Date"), "fieldtype": "Date", "width": 95},
+		text("employment_type", _("Employment Type"), 100),
 		text("cost_center", _("Cost Center"), 110),
 		{"fieldname": "date", "label": _("Date"), "fieldtype": "Date", "width": 95},
 		text("day", _("Day"), 50),
@@ -116,6 +129,7 @@ def get_data(filters, start, end):
 	}
 	cost_centers = get_employee_payroll_details(names)
 	cost_center_names = dict(frappe.get_all("Cost Center", fields=["name", "cost_center_name"], as_list=True))
+	details = get_employee_details(names)
 	holidays = HolidayDates(start, end)
 	last_day = getdate(today())
 
@@ -125,6 +139,7 @@ def get_data(filters, start, end):
 		common = {
 			"employee": emp.name,
 			"employee_name": emp.employee_name,
+			**details.get(emp.name, {}),
 			"cost_center": cost_center_names.get(cost_center) or cost_center,
 		}
 		rest_days = holidays.get(emp.name)
@@ -159,6 +174,24 @@ def get_data(filters, start, end):
 			data.append(get_total_row(common, rows))
 			data.append({})
 	return data[:-1]
+
+
+def get_employee_details(employees):
+	"""{employee: department, designation, nationality, employee_category, civil_id, date_of_joining,
+	employment_type} - Civil ID and nationality from the site's own fields when it has them."""
+	meta = frappe.get_meta("Employee")
+	nationality = get_nationality_field()
+	civil_id = next((f for f in ID_FIELDS if meta.has_field(f)), None)
+	fields = ["name", "department", "designation", "date_of_joining", "employment_type"]
+	fields += [f"{f} as {alias}" for f, alias in ((nationality, "nationality"), (civil_id, "civil_id")) if f]
+	if has_employee_category():
+		fields.append("employee_category")
+
+	details = {}
+	for d in frappe.get_all("Employee", filters={"name": ("in", employees)}, fields=fields):
+		d.employee_category = d.get("employee_category") or get_employee_category(d.get("nationality"))
+		details[d.pop("name")] = d
+	return details
 
 
 def set_attendance_details(row, record, shift, punches):
