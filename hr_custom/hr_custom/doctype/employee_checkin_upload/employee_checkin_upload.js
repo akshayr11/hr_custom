@@ -17,6 +17,17 @@ frappe.ui.form.on("Employee Checkin Upload", {
 			}).addClass("btn-primary");
 		}
 
+		if (frm.doc.created_checkins && ["Uploaded", "Partly Uploaded"].includes(frm.doc.status)) {
+			frm.add_custom_button(__("Fetch Shift & Mark Attendance"), () => {
+				frm.call({
+					doc: frm.doc,
+					method: "fetch_shift_and_mark_attendance",
+					freeze: true,
+					freeze_message: __("Fetching shifts and marking attendance..."),
+				}).then(() => frm.reload_doc());
+			});
+		}
+
 		if (frm.doc.created_checkins) {
 			frm.add_custom_button(__("Check-ins"), () =>
 				frappe.set_route("List", "Employee Checkin", { device_id: frm.doc.name })
