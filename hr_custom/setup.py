@@ -294,6 +294,7 @@ def make_custom_fields():
 	make_loan_fields()
 	make_rejoin_date_fields()
 	make_attendance_fields()
+	make_full_and_final_fields()
 	update_employee_categories()
 
 
@@ -412,6 +413,12 @@ def make_rejoin_date_fields():
 
 def make_attendance_fields():
 	from hr_custom.overrides.attendance import make_fields
+
+	make_fields()
+
+
+def make_full_and_final_fields():
+	from hr_custom.overrides.full_and_final import make_fields
 
 	make_fields()
 

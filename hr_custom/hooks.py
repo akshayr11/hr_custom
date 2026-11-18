@@ -184,6 +184,14 @@ doc_events = {
 	"Attendance": {
 		"validate": "hr_custom.overrides.attendance.validate",
 	},
+	# gratuity instalments paid through payroll, shown as already paid in the Full and Final Statement
+	"Full and Final Statement": {
+		"validate": "hr_custom.overrides.full_and_final.validate",
+	},
+	"Salary Slip": {
+		"on_submit": "hr_custom.overrides.full_and_final.on_salary_slip_change",
+		"on_cancel": "hr_custom.overrides.full_and_final.on_salary_slip_change",
+	},
 	"Attendance Request": {
 		"on_submit": "hr_custom.overrides.attendance.on_leave_or_request_change",
 		"on_cancel": "hr_custom.overrides.attendance.on_leave_or_request_change",
