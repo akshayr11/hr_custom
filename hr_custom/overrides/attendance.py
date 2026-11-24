@@ -53,6 +53,8 @@ def get_attendance_code(doc):
 		return "Ex"
 	if doc.status == "On Leave":
 		return "LV"
+	if doc.status == "Rest Day":  # status added by oerp_overtime
+		return "R"
 	if doc.status == "Absent":
 		if has_approved_leave(doc.employee, doc.attendance_date):
 			return "LV"
@@ -90,7 +92,11 @@ def is_rest_day(employee, date):
 def get_deduction_minutes(doc):
 	minutes = dict.fromkeys(MINUTE_FIELDS, 0)
 	# an exception (approved attendance request) or leave day is not deducted
-	if not (doc.get("shift") and doc.get("in_time")) or doc.get("attendance_request") or doc.status == "On Leave":
+	if (
+		not (doc.get("shift") and doc.get("in_time"))
+		or doc.get("attendance_request")
+		or doc.status in ("On Leave", "Rest Day")
+	):
 		return minutes
 
 	shift = frappe.get_cached_value(
