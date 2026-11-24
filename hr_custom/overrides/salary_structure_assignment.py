@@ -64,8 +64,14 @@ def get_airfare_field():
 	return next((f for f in fields if "year" in f.lower()), fields[0] if fields else None)
 
 
+def is_airfare_component(name):
+	"""Airfare, AirFare, Air Fare, AIRFARE... (component names are case-insensitive in the database)."""
+	return "".join(ch for ch in (name or "").lower() if ch.isalnum()) == "airfare"
+
+
 def add_airfare_row(rows):
-	if any(row.salary_component == AIRFARE_COMPONENT for row in rows):
+	# the structure has its own airfare component: no second one
+	if any(is_airfare_component(row.salary_component) for row in rows):
 		return rows
 
 	fieldname = get_airfare_field()
@@ -82,7 +88,8 @@ def add_airfare_row(rows):
 		{
 			"parentfield": "earnings",
 			"parenttype": "Salary Structure",
-			"salary_component": AIRFARE_COMPONENT,
+			# the stored name (e.g. "AirFare"): the slip matches its rows by the exact name
+			"salary_component": component.name,
 			"abbr": component.salary_component_abbr or AIRFARE_ABBR,
 			"amount_based_on_formula": 1,
 			# skipped (no row on the slip) when the employee has no airfare
