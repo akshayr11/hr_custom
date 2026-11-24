@@ -257,6 +257,8 @@ extend_doctype_class = {
 	"Salary Structure Assignment": "hr_custom.overrides.salary_structure_assignment.SalaryStructureAssignmentMixin",
 	"Salary Slip": "hr_custom.overrides.salary_structure_assignment.SalarySlipMixin",
 	"Gratuity": "hr_custom.overrides.gratuity.GratuityMixin",
+	# fixes oerp_earned_leaves' Leave Application override (HRMS skipped for non-annual leaves)
+	"Leave Application": "hr_custom.overrides.leave_application.LeaveApplicationMixin",
 	# Lending: Advance Salary schedules are reviewed (Draft) before they become active
 	"Loan Disbursement": "hr_custom.overrides.loan.LoanDisbursementMixin",
 	"Loan Repayment Schedule": "hr_custom.overrides.loan.LoanRepaymentScheduleMixin",
