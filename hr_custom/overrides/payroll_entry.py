@@ -1,11 +1,16 @@
 import frappe
 from frappe import _
+from frappe.utils import flt
 
 from hr_custom.utils import get_employee_payroll_details, get_matching_employees
 
+JE_AMOUNT_FIELDS = ("debit_in_account_currency", "credit_in_account_currency", "debit", "credit")
+
 
 class PayrollEntryMixin:
-	"""Adds Employee Category, Job Category and Payroll Cost Center filters to Payroll Entry."""
+	"""Adds Employee Category, Job Category and Payroll Cost Center filters to Payroll Entry, and
+	posts the Payroll Payable (and, in the bank entry, the Bank) amounts by the employees' payroll
+	cost centers instead of the Payroll Entry's one cost center."""
 
 	def validate(self):
 		super().validate()
@@ -80,6 +85,81 @@ class PayrollEntryMixin:
 						row.idx, frappe.bold(row.employee), self.get_filter_description()
 					)
 				)
+
+	def make_journal_entry(self, accounts, *args, **kwargs):
+		"""HRMS splits the salary expense lines by the employees' payroll cost centers, but books the
+		Payroll Payable line of the accrual and bank entries (and the Bank line) on the Payroll Entry's
+		cost center. Split those by the same cost centers, in proportion to the employees' net pay
+		(gross - deductions), so every cost center carries its own salaries."""
+		voucher_type = kwargs.get("voucher_type") or "Journal Entry"
+		accounts = self.distribute_by_payroll_cost_center(accounts, voucher_type)
+		return super().make_journal_entry(accounts, *args, **kwargs)
+
+	def distribute_by_payroll_cost_center(self, accounts, voucher_type):
+		shares = self.get_cost_center_shares()
+		if not shares:
+			return accounts
+
+		rows = []
+		for row in accounts:
+			is_payable = row.get("account") == self.payroll_payable_account and row.get("reference_name") == self.name
+			is_bank = voucher_type == "Bank Entry" and row.get("account") == self.payment_account
+			if not (is_payable or is_bank) or row.get("cost_center") != self.cost_center:
+				rows.append(row)  # other lines, or already split by HRMS (employee-wise bank entry)
+			elif row.get("party_type") == "Employee" and row.get("party"):
+				rows += split_row(row, self.get_employee_shares(row["party"]))
+			else:
+				rows += split_row(row, shares)
+		return rows
+
+	def get_cost_center_shares(self):
+		"""{cost center: share of the net pay} of the submitted salary slips."""
+		if not hasattr(self, "_cost_center_shares"):
+			totals = {}
+			for slip in frappe.get_all(
+				"Salary Slip",
+				filters={"payroll_entry": self.name, "docstatus": 1},
+				fields=["employee", "salary_structure", "base_gross_pay", "base_total_deduction"],
+			):
+				net = flt(slip.base_gross_pay) - flt(slip.base_total_deduction)
+				for cost_center, share in self.get_employee_shares(slip.employee, slip.salary_structure).items():
+					totals[cost_center] = totals.get(cost_center, 0) + net * share
+			total = sum(v for v in totals.values() if v > 0)
+			self._cost_center_shares = {cc: v / total for cc, v in totals.items() if v > 0} if total else {}
+		return self._cost_center_shares
+
+	def get_employee_shares(self, employee, salary_structure=None):
+		"""{cost center: share} of the employee: the Salary Structure Assignment's Payroll Cost
+		Centers, else the employee's / department's payroll cost center (HRMS's own rule)."""
+		if not salary_structure:
+			salary_structure = frappe.db.get_value(
+				"Salary Slip", {"payroll_entry": self.name, "employee": employee, "docstatus": 1}, "salary_structure"
+			)
+		cost_centers = self.get_payroll_cost_centers_for_employee(employee, salary_structure)
+		total = sum(flt(p) for p in cost_centers.values())
+		return {cc: flt(p) / total for cc, p in cost_centers.items() if cc} if total else {}
+
+
+def split_row(row, shares):
+	"""The journal entry line split by {cost center: share}; the last line takes the rounding."""
+	if len(shares) == 1 and next(iter(shares)) == row.get("cost_center"):
+		return [row]
+
+	precision = frappe.get_precision("Journal Entry Account", "debit_in_account_currency")
+	fields = [f for f in JE_AMOUNT_FIELDS if flt(row.get(f))]
+	rows, allocated = [], dict.fromkeys(fields, 0.0)
+	items = list(shares.items())
+	for i, (cost_center, share) in enumerate(items):
+		new = {**row, "cost_center": cost_center}
+		for f in fields:
+			if i == len(items) - 1:
+				new[f] = flt(flt(row[f]) - allocated[f], precision)
+			else:
+				new[f] = flt(flt(row[f]) * share, precision)
+				allocated[f] += new[f]
+		if any(flt(new[f]) for f in fields):
+			rows.append(new)
+	return rows
 
 
 def get_dashboard_data(data):
