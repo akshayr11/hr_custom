@@ -167,6 +167,7 @@ doc_events = {
 			"hr_custom.utils.set_employee_category",
 			"hr_custom.overrides.employee_onboarding.set_employee_passport_details",
 			"hr_custom.overrides.rejoin_date.set_on_employee",
+			"hr_custom.overrides.employee.set_status_from_relieving_date",
 		],
 		"before_insert": "hr_custom.overrides.job_applicant.before_insert",
 	},
