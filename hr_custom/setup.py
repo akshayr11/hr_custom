@@ -328,9 +328,10 @@ def make_workflow_user_fields():
 
 
 def make_job_requisition_fields():
-	from hr_custom.overrides.job_requisition import make_fields
+	from hr_custom.overrides import job_requisition, staffing_plan
 
-	make_fields()
+	job_requisition.make_fields()
+	staffing_plan.make_fields()
 
 
 def make_employee_id_fields():

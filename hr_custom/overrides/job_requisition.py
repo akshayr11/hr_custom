@@ -21,8 +21,11 @@ RELEASED_STATUSES = ("Rejected", "Cancelled")
 
 
 def validate(doc, method=None):
+	from hr_custom.overrides.staffing_plan import validate_requisition_staffing_plan
+
 	validate_justification(doc)
 	validate_clearance_positions(doc)
+	validate_requisition_staffing_plan(doc)
 
 
 def on_update(doc, method=None):
