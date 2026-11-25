@@ -79,7 +79,7 @@ def is_budgeted(doc):
 
 def validate_requisition_staffing_plan(doc):
 	"""Job Requisition validate: link and check the staffing plan of an approved budgeted requisition."""
-	if not doc.meta.has_field("staffing_plan"):
+	if not has_staffing_plan_link(doc.meta):
 		return
 	if not is_budgeted(doc):
 		doc.staffing_plan = None
@@ -133,8 +133,10 @@ def check_staffing_plan(doc):
 		)
 
 	doc.staffing_plan = plan.name
-	doc.staffing_plan_vacancies_left = vacancies_left - positions
-	doc.staffing_plan_budget_left = budget_left - cost if flt(plan.total_estimated_cost) else 0
+	if doc.meta.has_field("staffing_plan_vacancies_left"):
+		doc.staffing_plan_vacancies_left = vacancies_left - positions
+	if doc.meta.has_field("staffing_plan_budget_left"):
+		doc.staffing_plan_budget_left = budget_left - cost if flt(plan.total_estimated_cost) else 0
 
 
 def get_staffing_plan_detail(company, designation, date):
@@ -187,42 +189,56 @@ def get_taken(staffing_plan, designation, exclude=None):
 	return frappe._dict(positions=positions, cost=cost)
 
 
+def has_staffing_plan_link(meta):
+	"""The requisition's Staffing Plan link (the site may already have its own `staffing_plan` field)."""
+	df = meta.get_field("staffing_plan")
+	return bool(df and df.fieldtype == "Link" and df.options == "Staffing Plan")
+
+
 def make_fields():
+	"""Staffing Plan, Plan Vacancies Left and Plan Budget Left on Job Requisition (fields the site
+	already has are left as they are)."""
 	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
-	create_custom_fields(
+	meta = frappe.get_meta("Job Requisition")
+	existing = meta.get_field("staffing_plan")
+	if existing:
+		print(f"Job Requisition already has staffing_plan: {existing.fieldtype} {existing.options or ''} ({existing.label})")
+		if not has_staffing_plan_link(meta):
+			print("It is not a link to Staffing Plan: the requisition will not be linked to its plan.")
+
+	fields = [
 		{
-			"Job Requisition": [
-				{
-					"fieldname": "staffing_plan",
-					"fieldtype": "Link",
-					"label": "Staffing Plan",
-					"options": "Staffing Plan",
-					"insert_after": "expected_compensation",
-					"read_only": 1,
-					"no_copy": 1,
-					"description": "Linked when a budgeted requisition is approved",
-				},
-				{
-					"fieldname": "staffing_plan_vacancies_left",
-					"fieldtype": "Int",
-					"label": "Plan Vacancies Left",
-					"insert_after": "staffing_plan",
-					"read_only": 1,
-					"no_copy": 1,
-					"depends_on": "staffing_plan",
-				},
-				{
-					"fieldname": "staffing_plan_budget_left",
-					"fieldtype": "Currency",
-					"label": "Plan Budget Left",
-					"options": "Company:company:default_currency",
-					"insert_after": "staffing_plan_vacancies_left",
-					"read_only": 1,
-					"no_copy": 1,
-					"depends_on": "staffing_plan",
-				},
-			]
+			"fieldname": "staffing_plan",
+			"fieldtype": "Link",
+			"label": "Staffing Plan",
+			"options": "Staffing Plan",
+			"insert_after": "expected_compensation",
+			"read_only": 1,
+			"no_copy": 1,
+			"description": "Linked when a budgeted requisition is approved",
 		},
-		update=True,
-	)
+		{
+			"fieldname": "staffing_plan_vacancies_left",
+			"fieldtype": "Int",
+			"label": "Plan Vacancies Left",
+			"insert_after": "staffing_plan",
+			"read_only": 1,
+			"no_copy": 1,
+			"depends_on": "staffing_plan",
+		},
+		{
+			"fieldname": "staffing_plan_budget_left",
+			"fieldtype": "Currency",
+			"label": "Plan Budget Left",
+			"options": "Company:company:default_currency",
+			"insert_after": "staffing_plan_vacancies_left",
+			"read_only": 1,
+			"no_copy": 1,
+			"depends_on": "staffing_plan",
+		},
+	]
+	missing = [df for df in fields if not meta.has_field(df["fieldname"])]
+	if missing:
+		create_custom_fields({"Job Requisition": missing}, update=True)
+	print("Added:", ", ".join(df["fieldname"] for df in missing) or "nothing (all fields exist)")
