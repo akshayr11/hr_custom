@@ -418,9 +418,10 @@ def make_attendance_fields():
 
 
 def make_full_and_final_fields():
-	from hr_custom.overrides.full_and_final import make_fields
+	from hr_custom.overrides import full_and_final, full_and_final_payment
 
-	make_fields()
+	full_and_final.make_fields()
+	full_and_final_payment.make_fields()
 
 
 def make_gratuity_fields():

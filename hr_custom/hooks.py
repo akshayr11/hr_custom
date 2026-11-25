@@ -51,6 +51,7 @@ doctype_js = {
 	"Employee Promotion": "public/js/employee_promotion.js",
 	"Loan Repayment Schedule": "public/js/loan_repayment_schedule.js",
 	"Leave Application": "public/js/leave_application.js",
+	"Full and Final Statement": "public/js/full_and_final_statement.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -187,7 +188,16 @@ doc_events = {
 	},
 	# gratuity instalments paid through payroll, shown as already paid in the Full and Final Statement
 	"Full and Final Statement": {
-		"validate": "hr_custom.overrides.full_and_final.validate",
+		"validate": [
+			"hr_custom.overrides.full_and_final.validate",
+			"hr_custom.overrides.full_and_final_payment.set_outstanding",
+		],
+		"on_submit": "hr_custom.overrides.full_and_final_payment.set_outstanding",
+	},
+	# Full and Final Statement partial payments: Paid / Partly Paid / Unpaid from its journal entries
+	"Journal Entry": {
+		"on_submit": "hr_custom.overrides.full_and_final_payment.on_journal_entry_change",
+		"on_cancel": "hr_custom.overrides.full_and_final_payment.on_journal_entry_change",
 	},
 	"Salary Slip": {
 		"on_submit": "hr_custom.overrides.full_and_final.on_salary_slip_change",
