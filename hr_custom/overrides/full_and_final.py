@@ -7,12 +7,19 @@ row of its Payables is the balance: Gratuity amount - instalments already paid.
 
 The list is refreshed on every save of a draft statement, and when a salary slip with an
 instalment is submitted or cancelled.
+
+Final salary: the employee's salary slips from the relieving month on (and withheld ones, as
+HRMS does) are Payables rows "Salary Slip" linked to the slip, Paid via Salary Slip (the
+statement's journal entry leaves them out: payroll pays them). A row is Settled once its
+Payroll Entry's bank entry is submitted, else Unsettled with a remark, so the statement cannot
+be submitted before the final salary is paid. Refreshed on save of a draft statement, on salary
+slip submit / cancel and on payroll bank entry submit / cancel.
 """
 
 import frappe
 from frappe import _
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
-from frappe.utils import flt, fmt_money
+from frappe.utils import flt, fmt_money, get_first_day
 
 GRATUITY_INSTALMENT_COMPONENT = "Gratuity Instalment"
 GRATUITY_INSTALMENT_ABBR = "GI"
@@ -21,8 +28,115 @@ FNF = "Full and Final Statement"
 
 def validate(doc, method=None):
 	"""Full and Final Statement validate."""
-	if doc.docstatus == 0 and doc.meta.has_field("gratuity_instalments"):
+	if doc.docstatus != 0:
+		set_payable_total(doc)  # HRMS works the totals out again on submit
+		return
+	set_salary_slip_payables(doc)
+	if doc.meta.has_field("gratuity_instalments"):
 		set_gratuity_instalments(doc)
+	set_payable_total(doc)
+
+
+def set_payable_total(doc):
+	"""Total Payable without the rows paid via salary slip: payroll pays them, not the statement
+	(HRMS's Create Journal Entry balances on this total but leaves those rows out)."""
+	if hasattr(doc, "set_totals"):
+		doc.set_totals()
+	via_slip = sum(flt(row.amount) for row in doc.get("payables") or [] if row.paid_via_salary_slip)
+	if via_slip:
+		doc.total_payable_amount = flt(
+			flt(doc.total_payable_amount) - via_slip, doc.precision("total_payable_amount")
+		)
+
+
+def set_salary_slip_payables(doc):
+	"""Payables rows of the final salary slips (rebuilt; other rows are kept)."""
+	if not (doc.employee and doc.relieving_date):
+		return
+	slips = get_final_salary_slips(doc.employee, doc.relieving_date)
+	others = [row for row in doc.get("payables") or [] if row.reference_document_type != "Salary Slip"]
+
+	rows = []
+	for slip in slips:
+		paid, remark = get_slip_payment(slip)
+		rows.append(
+			{
+				"component": "Salary Slip",
+				"reference_document_type": "Salary Slip",
+				"reference_document": slip.name,
+				"amount": slip.net_pay,
+				"account": slip.payroll_payable_account,
+				"paid_via_salary_slip": 1,
+				"status": "Settled" if paid else "Unsettled",
+				"remark": remark,
+			}
+		)
+	doc.set("payables", [])
+	for row in rows + others:
+		doc.append("payables", row if isinstance(row, dict) else row.as_dict(no_default_fields=True))
+
+	drafts = frappe.get_all(
+		"Salary Slip",
+		filters={"employee": doc.employee, "docstatus": 0, "end_date": (">=", get_first_day(doc.relieving_date))},
+		pluck="name",
+	)
+	if drafts:
+		frappe.msgprint(
+			_("Salary Slip {0} of the final month is not submitted yet").format(", ".join(drafts)),
+			indicator="orange",
+			alert=True,
+		)
+	if hasattr(doc, "set_totals"):
+		doc.set_totals()
+
+
+def get_final_salary_slips(employee, relieving_date):
+	"""Submitted salary slips from the relieving month on, and withheld ones."""
+	slip = frappe.qb.DocType("Salary Slip")
+	pe = frappe.qb.DocType("Payroll Entry")
+	return (
+		frappe.qb.from_(slip)
+		.left_join(pe)
+		.on(slip.payroll_entry == pe.name)
+		.select(
+			slip.name, slip.status, slip.net_pay, slip.payroll_entry, slip.start_date, pe.payroll_payable_account
+		)
+		.where(
+			(slip.employee == employee)
+			& (slip.docstatus == 1)
+			& ((slip.end_date >= get_first_day(relieving_date)) | (slip.status == "Withheld"))
+		)
+		.orderby(slip.start_date)
+		.run(as_dict=True)
+	)
+
+
+def get_slip_payment(slip):
+	"""(paid, remark): paid once the slip's Payroll Entry has a submitted bank entry."""
+	if slip.status == "Withheld":
+		return False, _("Salary withheld: release it from Payroll Entry {0}").format(slip.payroll_entry or "")
+	if not slip.payroll_entry:
+		return False, _("Not paid: the salary slip is not part of a Payroll Entry")
+
+	jea = frappe.qb.DocType("Journal Entry Account")
+	je = frappe.qb.DocType("Journal Entry")
+	bank_entry = (
+		frappe.qb.from_(jea)
+		.join(je)
+		.on(jea.parent == je.name)
+		.select(je.name)
+		.where(
+			(jea.reference_type == "Payroll Entry")
+			& (jea.reference_name == slip.payroll_entry)
+			& (je.voucher_type == "Bank Entry")
+			& (je.docstatus == 1)
+		)
+		.limit(1)
+		.run(pluck=True)
+	)
+	if bank_entry:
+		return True, _("Paid through Payroll Entry {0} by {1}").format(slip.payroll_entry, bank_entry[0])
+	return False, _("Not paid yet: make the bank entry of Payroll Entry {0}").format(slip.payroll_entry)
 
 
 def set_gratuity_instalments(doc):
@@ -105,21 +219,34 @@ def set_gratuity_balance(doc):
 
 def on_salary_slip_change(doc, method=None):
 	"""Salary Slip on_submit / on_cancel: refresh the employee's draft Full and Final Statement."""
-	components = get_instalment_components()
-	if not components or not any(d.salary_component in components for d in doc.get("earnings") or []):
-		return
-	if not frappe.db.exists("DocType", FNF):
-		return
+	refresh_draft_statements([doc.employee])
 
-	for name in frappe.get_all(FNF, filters={"employee": doc.employee, "docstatus": 0}, pluck="name"):
+
+def on_payroll_bank_entry_change(doc, method=None):
+	"""Journal Entry on_submit / on_cancel: a payroll bank entry settles the final salary slips."""
+	payroll_entries = {d.reference_name for d in doc.accounts if d.reference_type == "Payroll Entry" and d.reference_name}
+	if doc.voucher_type != "Bank Entry" or not payroll_entries:
+		return
+	employees = frappe.get_all(
+		"Salary Slip", filters={"payroll_entry": ("in", list(payroll_entries)), "docstatus": 1}, pluck="employee"
+	)
+	refresh_draft_statements(employees)
+
+
+def refresh_draft_statements(employees):
+	if not employees or not frappe.db.exists("DocType", FNF):
+		return
+	for name in frappe.get_all(FNF, filters={"employee": ("in", list(set(employees))), "docstatus": 0}, pluck="name"):
 		try:
 			statement = frappe.get_doc(FNF, name)
-			# before save: the links are validated first and the cancelled slip must be gone
-			set_gratuity_instalments(statement)
+			# before save: the links are validated first and a cancelled slip must be gone
+			set_salary_slip_payables(statement)
+			if statement.meta.has_field("gratuity_instalments"):
+				set_gratuity_instalments(statement)
 			statement.flags.ignore_permissions = True
 			statement.save()
 		except Exception:
-			frappe.log_error(title=f"Full and Final Statement {name}: gratuity instalments not refreshed")
+			frappe.log_error(title=f"Full and Final Statement {name}: salary slips not refreshed")
 
 
 def make_fields():

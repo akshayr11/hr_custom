@@ -151,8 +151,16 @@ def update_payment_status(statement_name):
 	else:
 		status = "Unpaid"
 	doc.db_set({"paid_amount": paid, "outstanding_amount": max(outstanding, 0), "status": status})
-	doc.update_linked_payable_documents()  # Gratuity / Leave Encashment paid only when fully Paid
+	update_linked_payable_documents(doc)
 	doc.notify_update()
+
+
+def update_linked_payable_documents(doc):
+	"""Gratuity / Leave Encashment paid only when the statement is fully Paid (HRMS's rule; its own
+	method fails on the empty Gratuity / Leave Encashment rows it adds to every statement)."""
+	for row in doc.get("payables") or []:
+		if row.reference_document_type in ("Gratuity", "Leave Encashment") and row.reference_document:
+			doc.update_reference_document_payment_status(row)
 
 
 def on_journal_entry_change(doc, method=None):

@@ -196,8 +196,14 @@ doc_events = {
 	},
 	# Full and Final Statement partial payments: Paid / Partly Paid / Unpaid from its journal entries
 	"Journal Entry": {
-		"on_submit": "hr_custom.overrides.full_and_final_payment.on_journal_entry_change",
-		"on_cancel": "hr_custom.overrides.full_and_final_payment.on_journal_entry_change",
+		"on_submit": [
+			"hr_custom.overrides.full_and_final_payment.on_journal_entry_change",
+			"hr_custom.overrides.full_and_final.on_payroll_bank_entry_change",
+		],
+		"on_cancel": [
+			"hr_custom.overrides.full_and_final_payment.on_journal_entry_change",
+			"hr_custom.overrides.full_and_final.on_payroll_bank_entry_change",
+		],
 	},
 	"Salary Slip": {
 		"on_submit": "hr_custom.overrides.full_and_final.on_salary_slip_change",
