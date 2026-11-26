@@ -6,9 +6,12 @@ date), and must fit in that plan: its positions within the designation's vacanci
 (positions x expected compensation, else the plan's cost per position) within the designation's
 estimated cost, less what the other approved requisitions of the plan already take.
 
-Budgeted = No: hired for outside the staffing plan, so its Job Opening is not linked to (or
-checked against) a Staffing Plan, and the Job Offers for its applicants are not checked against
-staffing plan vacancies / budget.
+Its Job Opening is linked to that Staffing Plan automatically (the active plan of the designation
+when the requisition has none yet); without one the opening cannot be saved.
+
+Budgeted = No: no Staffing Plan is needed. Hired for outside the staffing plan, so its Job
+Opening is not linked to (or checked against) a Staffing Plan, and the Job Offers for its
+applicants are not checked against staffing plan vacancies / budget.
 
 Path: Job Offer -> Job Applicant -> Job Opening -> Job Requisition (Budgeted field, found by
 label as in hr_custom.overrides.job_requisition).
@@ -51,13 +54,48 @@ def is_non_budgeted_hire(job_applicant=None, job_opening=None):
 	return is_non_budgeted_opening(job_opening)
 
 
+def is_budgeted_requisition(job_requisition):
+	"""True when the requisition says Budgeted = Yes (False without a Budgeted field)."""
+	if not job_requisition or not frappe.db.exists("Job Requisition", job_requisition):
+		return False
+	budgeted, _justification = get_fields(frappe.get_meta("Job Requisition"))
+	if not budgeted:
+		return False
+	return not is_non_budgeted(frappe.db.get_value("Job Requisition", job_requisition, budgeted.fieldname), budgeted.fieldtype)
+
+
+def get_requisition_staffing_plan(job_requisition, company, designation):
+	"""The Staffing Plan linked to the requisition, else the active one of the designation."""
+	if has_staffing_plan_link(frappe.get_meta("Job Requisition")):
+		plan = frappe.db.get_value("Job Requisition", job_requisition, "staffing_plan")
+		if plan:
+			return plan
+	date = frappe.db.get_value("Job Requisition", job_requisition, "posting_date") or today()
+	detail = get_staffing_plan_detail(company, designation, date)
+	return detail.name if detail else None
+
+
 class JobOpeningMixin:
 	def validate_current_vacancies(self):
-		if is_non_budgeted_requisition(self.get("job_requisition")):
-			# HRMS would link the designation's active staffing plan and check its vacancies
+		requisition = self.get("job_requisition")
+		if is_non_budgeted_requisition(requisition):
+			# not budgeted: no Staffing Plan (HRMS would link the designation's active one)
 			self.staffing_plan = None
 			self.planned_vacancies = 0
 			return
+		if is_budgeted_requisition(requisition):
+			# budgeted: the requisition's Staffing Plan, always
+			plan = get_requisition_staffing_plan(requisition, self.company, self.designation)
+			if not plan:
+				frappe.throw(
+					_("Job Requisition {0} is budgeted but no active Staffing Plan has {1} for {2}. Add it to a Staffing Plan, or set the requisition as not budgeted.").format(
+						get_link_to_form("Job Requisition", requisition), frappe.bold(self.designation), frappe.bold(self.company)
+					),
+					title=_("No Staffing Plan"),
+				)
+			if plan != self.staffing_plan:
+				self.staffing_plan = plan
+				self.planned_vacancies = 0  # HRMS reads it from the plan
 		return super().validate_current_vacancies()
 
 
