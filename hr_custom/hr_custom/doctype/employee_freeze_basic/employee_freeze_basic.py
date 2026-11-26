@@ -7,7 +7,7 @@ this basic, the remaining service on the current basic (see EOS Statement)."""
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, getdate, nowdate
+from frappe.utils import flt, get_link_to_form, getdate, nowdate
 
 
 class EmployeeFreezeBasic(Document):
@@ -22,15 +22,22 @@ class EmployeeFreezeBasic(Document):
 		self.validate_duplicate()
 
 	def validate_duplicate(self):
+		"""One Freeze Basic per employee (draft or submitted); a new one only after it is cancelled."""
 		other = frappe.db.get_value(
 			"Employee Freeze Basic",
-			{"employee": self.employee, "docstatus": 1, "name": ("!=", self.name)},
+			{"employee": self.employee, "docstatus": ("<", 2), "name": ("!=", self.name)},
+			["name", "docstatus"],
+			as_dict=True,
 		)
 		if other:
 			frappe.throw(
-				_("Employee {0} already has Freeze Basic {1}. Cancel or amend it instead.").format(
-					frappe.bold(self.employee_name or self.employee), frappe.bold(other)
-				)
+				_("Employee {0} already has Freeze Basic {1} ({2}). Only one is allowed per employee: {3}").format(
+					frappe.bold(self.employee_name or self.employee),
+					get_link_to_form("Employee Freeze Basic", other.name),
+					_("Draft") if other.docstatus == 0 else _("Submitted"),
+					_("edit or delete the draft.") if other.docstatus == 0 else _("cancel it (or amend it) first."),
+				),
+				title=_("Freeze Basic Exists"),
 			)
 
 
