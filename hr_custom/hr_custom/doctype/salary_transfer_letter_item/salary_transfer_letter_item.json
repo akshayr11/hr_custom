@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "creation": "2026-11-26 12:17:16.329752",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "salary_component",
+  "arabic_component_name",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "salary_component",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Salary Component",
+   "options": "Salary Component"
+  },
+  {
+   "fieldname": "arabic_component_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Arabic Component Name"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Amount"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-26 12:20:14.352209",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "Salary Transfer Letter Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
