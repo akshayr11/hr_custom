@@ -3,6 +3,11 @@ Gratuity Rule slabs - Expats only, more than 1 year, half basic for the first 3 
 who joined on or before 31-Jul-2023, Freeze Basic up to its Till Date.
 
 The gratuity is calculated up to Till Date, else the employee's Relieving Date, else Posting Date.
+
+Prepaid Gratuity: the salary slips that already paid gratuity through payroll (components ticked
+"Is Prepaid Gratuity", see hr_custom.overrides.full_and_final) are listed on a draft Gratuity,
+with Prepaid Amount and Net Gratuity Payable = Amount - Prepaid. The Amount stays the full
+gratuity; the Full and Final Statement deducts the prepaid part from it.
 """
 
 import frappe
@@ -15,6 +20,28 @@ GRATUITY_RULE = "Oman Expat Gratuity"
 
 
 class GratuityMixin:
+	def validate(self):
+		super().validate()
+		if self.docstatus == 0:
+			self.set_prepaid_gratuity()
+
+	def set_prepaid_gratuity(self):
+		from hr_custom.overrides.full_and_final import get_gratuity_instalments
+
+		if not self.meta.has_field("prepaid_gratuity"):
+			return
+		self.set("prepaid_gratuity", get_gratuity_instalments(self.employee))
+		self.total_prepaid_gratuity = flt(sum(flt(d.amount) for d in self.prepaid_gratuity))
+		self.net_gratuity_payable = max(flt(self.amount) - self.total_prepaid_gratuity, 0)
+		if self.total_prepaid_gratuity > flt(self.amount) and flt(self.amount):
+			frappe.msgprint(
+				_("Prepaid Gratuity {0} is more than the Gratuity {1}").format(
+					frappe.format(self.total_prepaid_gratuity, "Currency"), frappe.format(self.amount, "Currency")
+				),
+				indicator="orange",
+				alert=True,
+			)
+
 	@frappe.whitelist()
 	def calculate_work_experience_and_amount(self) -> dict:
 		if not self.employee:
@@ -93,6 +120,43 @@ def make_fields():
 					"label": "Calculation Basis",
 					"insert_after": "gratuity_calculation_column",
 					"read_only": 1,
+				},
+				{
+					"fieldname": "total_prepaid_gratuity",
+					"fieldtype": "Currency",
+					"label": "Prepaid Gratuity Amount",
+					"options": "Company:company:default_currency",
+					"insert_after": "amount",
+					"read_only": 1,
+					"no_copy": 1,
+					"description": "Already paid through payroll (Prepaid Gratuity component)",
+				},
+				{
+					"fieldname": "net_gratuity_payable",
+					"fieldtype": "Currency",
+					"label": "Net Gratuity Payable",
+					"options": "Company:company:default_currency",
+					"insert_after": "total_prepaid_gratuity",
+					"read_only": 1,
+					"no_copy": 1,
+					"bold": 1,
+					"description": "Amount - Prepaid Gratuity; deducted in the Full and Final Statement",
+				},
+				{
+					"fieldname": "prepaid_gratuity_section",
+					"fieldtype": "Section Break",
+					"label": "Prepaid Gratuity (Paid through Payroll)",
+					"insert_after": "gratuity_details",
+					"depends_on": "eval:doc.total_prepaid_gratuity",
+				},
+				{
+					"fieldname": "prepaid_gratuity",
+					"fieldtype": "Table",
+					"label": "Prepaid Gratuity",
+					"options": "Full and Final Gratuity Instalment",
+					"insert_after": "prepaid_gratuity_section",
+					"read_only": 1,
+					"no_copy": 1,
 				},
 				{
 					"fieldname": "gratuity_details_section",

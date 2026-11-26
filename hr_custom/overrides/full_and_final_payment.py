@@ -157,10 +157,19 @@ def update_payment_status(statement_name):
 
 def update_linked_payable_documents(doc):
 	"""Gratuity / Leave Encashment paid only when the statement is fully Paid (HRMS's rule; its own
-	method fails on the empty Gratuity / Leave Encashment rows it adds to every statement)."""
+	method fails on the empty Gratuity / Leave Encashment rows it adds to every statement).
+	A Gratuity is paid in full then: the statement pays the balance after the Prepaid Gratuity,
+	which HRMS alone would leave Unpaid (paid amount != gratuity amount)."""
 	for row in doc.get("payables") or []:
-		if row.reference_document_type in ("Gratuity", "Leave Encashment") and row.reference_document:
+		if row.reference_document_type not in ("Gratuity", "Leave Encashment") or not row.reference_document:
+			continue
+		if row.reference_document_type != "Gratuity":
 			doc.update_reference_document_payment_status(row)
+			continue
+		gratuity = frappe.get_doc("Gratuity", row.reference_document)
+		paid = flt(gratuity.amount) if doc.docstatus == 1 and doc.status == "Paid" else 0
+		gratuity.db_set("paid_amount", paid)
+		gratuity.set_status(update=True)
 
 
 def on_journal_entry_change(doc, method=None):

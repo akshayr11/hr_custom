@@ -1,9 +1,10 @@
-"""Gratuity paid in instalments through payroll while the employee is still working.
+"""Prepaid Gratuity: gratuity paid in advance through payroll while the employee is still working.
 
-The instalments are paid with a salary component ticked "Is Gratuity Instalment" (setup creates
-"Gratuity Instalment"), e.g. through an Additional Salary. The Full and Final Statement lists
-the submitted salary slips that paid it under "Gratuity Paid through Payroll", and the Gratuity
-row of its Payables is the balance: Gratuity amount - instalments already paid.
+It is paid with a salary component ticked "Is Prepaid Gratuity" (setup creates "Prepaid
+Gratuity"), either as a component of the salary structure for the remaining payroll months or as
+Additional Salary for selected months. The Gratuity (hr_custom.overrides.gratuity) and the Full
+and Final Statement list the submitted salary slips that paid it under "Prepaid Gratuity", and
+the Gratuity row of the statement's Payables is the balance: Gratuity amount - prepaid.
 
 The list is refreshed on every save of a draft statement, and when a salary slip with an
 instalment is submitted or cancelled.
@@ -21,8 +22,10 @@ from frappe import _
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.utils import flt, fmt_money, get_first_day
 
-GRATUITY_INSTALMENT_COMPONENT = "Gratuity Instalment"
-GRATUITY_INSTALMENT_ABBR = "GI"
+GRATUITY_INSTALMENT_COMPONENT = "Prepaid Gratuity"
+GRATUITY_INSTALMENT_ABBR = "PG"
+# the component's name before it was renamed to Prepaid Gratuity
+OLD_COMPONENT = "Gratuity Instalment"
 FNF = "Full and Final Statement"
 
 
@@ -199,14 +202,14 @@ def set_gratuity_balance(doc):
 			continue
 		row.amount = max(gratuity - paid, 0)
 		currency = frappe.get_cached_value("Company", doc.company, "default_currency") if doc.company else None
-		row.remark = _("Gratuity {0} less {1} already paid through payroll").format(
+		row.remark = _("Gratuity {0} less {1} Prepaid Gratuity paid through payroll").format(
 			fmt_money(gratuity, currency=currency), fmt_money(paid, currency=currency)
 		)
 		paid = max(paid - gratuity, 0)  # more than one Gratuity: the rest goes to the next one
 
 	if has_gratuity and paid > 0:
 		frappe.msgprint(
-			_("The gratuity instalments paid through payroll are {0} more than the Gratuity. Add it to Receivables to recover it.").format(
+			_("The Prepaid Gratuity paid through payroll is {0} more than the Gratuity. Add it to Receivables to recover it.").format(
 				fmt_money(paid, currency=frappe.get_cached_value("Company", doc.company, "default_currency") if doc.company else None)
 			),
 			title=_("Gratuity Overpaid"),
@@ -258,32 +261,32 @@ def make_fields():
 				{
 					"fieldname": "is_gratuity_instalment",
 					"fieldtype": "Check",
-					"label": "Is Gratuity Instalment",
+					"label": "Is Prepaid Gratuity",
 					"insert_after": "is_overtime_component",
 					"depends_on": "eval:doc.type=='Earning'",
-					"description": "Gratuity paid in parts through payroll while the employee is working; shown as already paid in the Full and Final Statement",
+					"description": "Gratuity paid in advance through payroll (structure component or Additional Salary); shown as Prepaid on the Gratuity and deducted in the Full and Final Statement",
 				}
 			],
 			FNF: [
 				{
 					"fieldname": "gratuity_instalments_section",
 					"fieldtype": "Section Break",
-					"label": "Gratuity Paid through Payroll",
+					"label": "Prepaid Gratuity (Paid through Payroll)",
 					"insert_after": "payables",
 				},
 				{
 					"fieldname": "gratuity_instalments",
 					"fieldtype": "Table",
-					"label": "Gratuity Instalments",
+					"label": "Prepaid Gratuity",
 					"options": "Full and Final Gratuity Instalment",
 					"insert_after": "gratuity_instalments_section",
 					"read_only": 1,
-					"description": "Submitted salary slips with a Gratuity Instalment component. The Gratuity in Payables is the balance after these.",
+					"description": "Submitted salary slips with a Prepaid Gratuity component. The Gratuity in Payables is the balance after these.",
 				},
 				{
 					"fieldname": "total_gratuity_instalments",
 					"fieldtype": "Currency",
-					"label": "Gratuity Already Paid",
+					"label": "Prepaid Gratuity Amount",
 					"insert_after": "gratuity_instalments",
 					"read_only": 1,
 					"bold": 1,
@@ -296,18 +299,44 @@ def make_fields():
 
 
 def make_gratuity_instalment_component():
-	if frappe.db.exists("Salary Component", GRATUITY_INSTALMENT_COMPONENT):
-		frappe.db.set_value("Salary Component", GRATUITY_INSTALMENT_COMPONENT, "is_gratuity_instalment", 1)
+	"""The Prepaid Gratuity component (the earlier "Gratuity Instalment" is renamed when unused)."""
+	name = GRATUITY_INSTALMENT_COMPONENT
+	if not frappe.db.exists("Salary Component", name) and frappe.db.exists("Salary Component", OLD_COMPONENT):
+		if is_component_used(OLD_COMPONENT):
+			print(f"{OLD_COMPONENT} is used in salary slips / structures: kept (it still counts as Prepaid Gratuity)")
+			frappe.db.set_value("Salary Component", OLD_COMPONENT, "is_gratuity_instalment", 1)
+		else:
+			frappe.rename_doc("Salary Component", OLD_COMPONENT, name, force=True)
+			frappe.db.set_value("Salary Component", name, "salary_component", name)
+			if not frappe.db.exists("Salary Component", {"salary_component_abbr": GRATUITY_INSTALMENT_ABBR}):
+				frappe.db.set_value("Salary Component", name, "salary_component_abbr", GRATUITY_INSTALMENT_ABBR)
+			print(f"Renamed {OLD_COMPONENT} to {name}")
+
+	if frappe.db.exists("Salary Component", name):
+		frappe.db.set_value("Salary Component", name, "is_gratuity_instalment", 1)
 		return
+	abbr = GRATUITY_INSTALMENT_ABBR
+	if frappe.db.exists("Salary Component", {"salary_component_abbr": abbr}):
+		abbr = "PGR"
 	frappe.get_doc(
 		{
 			"doctype": "Salary Component",
-			"salary_component": GRATUITY_INSTALMENT_COMPONENT,
-			"salary_component_abbr": GRATUITY_INSTALMENT_ABBR,
+			"salary_component": name,
+			"salary_component_abbr": abbr,
 			"type": "Earning",
 			"depends_on_payment_days": 0,
 			"remove_if_zero_valued": 1,
 			"is_gratuity_instalment": 1,
-			"description": _("Gratuity paid in parts through payroll (Additional Salary) while the employee is still working"),
+			"description": _(
+				"Gratuity paid in advance through payroll (salary structure or Additional Salary) while the employee is still working"
+			),
 		}
 	).insert(ignore_permissions=True)
+	print(f"Created {name}")
+
+
+def is_component_used(component):
+	return bool(
+		frappe.db.exists("Salary Detail", {"salary_component": component})
+		or frappe.db.exists("Additional Salary", {"salary_component": component})
+	)
