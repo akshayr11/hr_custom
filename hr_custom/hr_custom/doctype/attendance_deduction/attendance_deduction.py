@@ -5,8 +5,10 @@
 exit, no check-out - see hr_custom.overrides.attendance) per employee, for approval.
 
 The approver can change an employee's Approved Minutes with a justification.
-Deduction Amount = Total Salary x Approved Minutes / Deduction Divisor (14400 by default),
-Total Salary being the full month earnings of the employee's salary structure.
+Calculated Amount = Total Salary x Approved Minutes / Deduction Divisor (14400 by default),
+Total Salary being the full month earnings of the employee's salary structure. The Deduction
+Amount is the Calculated Amount unless changed by hand (with a justification); changing the
+Approved Minutes or the divisor on the form calculates it again.
 Approving (workflow -> submit) creates an Additional Salary of the deduction component per
 employee, which the Payroll Entry of the Payroll Date picks up; cancelling cancels them.
 """
@@ -61,7 +63,18 @@ class AttendanceDeduction(Document):
 						row.idx, frappe.bold(row.employee_name or row.employee)
 					)
 				)
-			row.deduction_amount = flt(flt(row.total_salary) * row.approved_minutes / divisor, 3)
+			calculated = flt(flt(row.total_salary) * row.approved_minutes / divisor, 3)
+			# an amount changed by hand differs from the last calculated one: kept as it is
+			edited = row.deduction_amount is not None and flt(row.deduction_amount, 3) != flt(row.calculated_amount, 3)
+			row.calculated_amount = calculated
+			if not edited:
+				row.deduction_amount = calculated
+			elif flt(row.deduction_amount, 3) != calculated and not (row.justification or "").strip():
+				frappe.throw(
+					_("Row {0}: Justification is required as the Deduction Amount of {1} is changed").format(
+						row.idx, frappe.bold(row.employee_name or row.employee)
+					)
+				)
 
 		self.total_employees = len(self.employees)
 		self.total_deduction_minutes = sum(row.deduction_minutes or 0 for row in self.employees)

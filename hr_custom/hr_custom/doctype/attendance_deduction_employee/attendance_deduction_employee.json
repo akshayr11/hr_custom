@@ -13,6 +13,7 @@
   "deduction_minutes",
   "approved_minutes",
   "justification",
+  "calculated_amount",
   "deduction_amount",
   "extra_minutes",
   "additional_salary"
@@ -85,16 +86,25 @@
    "label": "Justification",
    "in_list_view": 1,
    "columns": 2,
-   "description": "Required when the Approved Minutes differ from the Deduction Minutes"
+   "description": "Required when the Approved Minutes differ from the Deduction Minutes, or the Deduction Amount from the Calculated Amount"
+  },
+  {
+   "fieldname": "calculated_amount",
+   "fieldtype": "Currency",
+   "label": "Calculated Amount",
+   "options": "currency",
+   "read_only": 1,
+   "description": "Total Salary x Approved Minutes / Deduction Divisor"
   },
   {
    "fieldname": "deduction_amount",
    "fieldtype": "Currency",
    "label": "Deduction Amount",
    "options": "currency",
-   "read_only": 1,
    "in_list_view": 1,
-   "columns": 2
+   "columns": 2,
+   "non_negative": 1,
+   "description": "The Calculated Amount; can be changed (Justification required). Changing the Approved Minutes calculates it again."
   },
   {
    "fieldname": "extra_minutes",
@@ -113,7 +123,7 @@
   }
  ],
  "links": [],
- "modified": "2026-11-12 12:00:00.000000",
+ "modified": "2026-11-26 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Hr Custom",
  "name": "Attendance Deduction Employee",

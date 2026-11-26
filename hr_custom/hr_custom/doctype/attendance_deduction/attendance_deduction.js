@@ -41,18 +41,30 @@ frappe.ui.form.on("Attendance Deduction", {
 
 frappe.ui.form.on("Attendance Deduction Employee", {
 	approved_minutes(frm, cdt, cdn) {
-		calculate(frm);
+		calculate(frm, cdn);
+	},
+	deduction_amount(frm) {
+		calculate(frm, null);
+	},
+	employees_remove(frm) {
+		calculate(frm, null);
 	},
 });
 
-function calculate(frm) {
+// recalculate: the amounts of all rows (cdn undefined), of one row, or none (null, totals only)
+function calculate(frm, cdn) {
 	const divisor = flt(frm.doc.deduction_divisor);
 	let minutes = 0;
 	let amount = 0;
 	(frm.doc.employees || []).forEach((row) => {
-		row.deduction_amount = divisor ? flt((flt(row.total_salary) * cint(row.approved_minutes)) / divisor, 3) : 0;
+		if (cdn === undefined || row.name === cdn) {
+			row.calculated_amount = divisor
+				? flt((flt(row.total_salary) * cint(row.approved_minutes)) / divisor, 3)
+				: 0;
+			row.deduction_amount = row.calculated_amount;
+		}
 		minutes += cint(row.approved_minutes);
-		amount += row.deduction_amount;
+		amount += flt(row.deduction_amount);
 	});
 	frm.set_value({ total_approved_minutes: minutes, total_deduction_amount: amount });
 	frm.refresh_field("employees");
