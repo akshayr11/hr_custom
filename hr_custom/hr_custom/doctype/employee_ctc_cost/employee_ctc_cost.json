@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "creation": "2026-11-26 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "ctc_column",
+  "employee_category",
+  "based_on",
+  "salary_component",
+  "rate",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "ctc_column",
+   "fieldtype": "Select",
+   "label": "CTC Column",
+   "options": "Employee Contr PASI\nEmployer Contr PASI\nSecurity Fund\nGratuity\nGSM\nAir Fare\nVisa Cost\nMedical Insurance Cost\nWorkmens Compensation\nFood Accomodation Cost\nLeave Salary",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "employee_category",
+   "fieldtype": "Select",
+   "label": "Employee Category",
+   "options": "All\nOmani\nExpat",
+   "default": "All",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "based_on",
+   "fieldtype": "Select",
+   "label": "Based On",
+   "options": "Salary Component\n% of Basic Salary\n% of Gross Salary\nMonthly Amount\nAnnual Amount",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "salary_component",
+   "fieldtype": "Link",
+   "label": "Salary Component",
+   "options": "Salary Component",
+   "depends_on": "eval:doc.based_on=='Salary Component'",
+   "mandatory_depends_on": "eval:doc.based_on=='Salary Component'",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Its amount in the month's salary slip (a statistical component works for costs paid by the company)"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Percent",
+   "label": "Rate",
+   "depends_on": "eval:(doc.based_on||'').startsWith('%')",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "depends_on": "eval:(doc.based_on||'').endsWith('Amount')",
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "Per employee"
+  }
+ ],
+ "istable": 1,
+ "editable_grid": 1,
+ "links": [],
+ "modified": "2026-11-26 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "Employee CTC Cost",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

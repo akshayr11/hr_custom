@@ -1,0 +1,65 @@
+{
+ "actions": [],
+ "creation": "2026-11-26 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "leave_salary_section",
+  "leave_days_per_year",
+  "column_break_leave",
+  "leave_salary_based_on",
+  "costs_section",
+  "costs"
+ ],
+ "fields": [
+  {
+   "fieldname": "leave_salary_section",
+   "fieldtype": "Section Break",
+   "label": "Leave Salary"
+  },
+  {
+   "fieldname": "leave_days_per_year",
+   "fieldtype": "Float",
+   "label": "Leave Days per Year",
+   "default": "30",
+   "description": "Leave Salary a month = salary / 30 x leave days per year / 12 (unless set in the table below)"
+  },
+  {
+   "fieldname": "column_break_leave",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "leave_salary_based_on",
+   "fieldtype": "Select",
+   "label": "Leave Salary Based On",
+   "options": "Basic Salary\nGross Salary",
+   "default": "Basic Salary"
+  },
+  {
+   "fieldname": "costs_section",
+   "fieldtype": "Section Break",
+   "label": "CTC Costs"
+  },
+  {
+   "fieldname": "costs",
+   "fieldtype": "Table",
+   "label": "Costs",
+   "options": "Employee CTC Cost",
+   "description": "How each column of the Employee CTC report is worked out (monthly). All the rows of a column that apply to the employee's category are added. A column without rows: Employee Contr PASI and Security Fund come from the PASI / Security Fund deductions of the salary slip, Air Fare from its airfare earning, Gratuity is the month's gratuity provision (Expats, as in EOS Statement), Leave Salary as above; the others are 0."
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-11-26 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Hr Custom",
+ "name": "Employee CTC Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "read": 1, "write": 1, "create": 1, "print": 1, "email": 1, "share": 1},
+  {"role": "HR Manager", "read": 1, "write": 1, "create": 1, "print": 1, "email": 1, "share": 1}
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
